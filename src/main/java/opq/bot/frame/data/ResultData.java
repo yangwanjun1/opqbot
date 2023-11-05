@@ -1,0 +1,18 @@
+package opq.bot.frame.data;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+import java.util.Map;
+
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ResultData {
+    @JsonProperty("CgiBaseResponse")
+    private CgiBaseResponse cgiBaseResponse;
+    @JsonProperty("ResponseData")
+    private ResponseData responseData;
+    @JsonProperty("Data")
+    private Map<Object,Object> data;
+}
