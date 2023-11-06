@@ -134,4 +134,54 @@ public class OpqUtils {
                 .toList();
     }
 
+
+    /**
+     * 撤回群消息
+     */
+    public static FileData revocation(long msgSeq,long msgRandom,long groupId){
+        FileData data = new FileData();
+        data.setCgiCmd("SsoGroup.Op");
+        data.setCgiRequest(new CgiRequest());
+        data.getCgiRequest().setOpCode(4691L);
+        data.getCgiRequest().setUin(groupId);
+        data.getCgiRequest().setMsgSeq(msgSeq);
+        data.getCgiRequest().setMsgRandom(msgRandom);
+        return data;
+    }
+    /**
+     * 禁言
+     */
+    public static FileData ban(long groupId,String uid,Integer time){
+        FileData data = new FileData();
+        data.setCgiCmd("SsoGroup.Op");
+        data.setCgiRequest(new CgiRequest());
+        data.getCgiRequest().setOpCode(4691L);
+        data.getCgiRequest().setUin(groupId);
+        data.getCgiRequest().setUid(uid);
+        data.getCgiRequest().setBanTime(time);
+        return data;
+    }
+    /**
+     * 踢成员
+     */
+    public static FileData eliminate(long groupId,String uid){
+        FileData data = new FileData();
+        data.setCgiCmd("SsoGroup.Op");
+        data.setCgiRequest(new CgiRequest());
+        data.getCgiRequest().setOpCode(2208L);
+        data.getCgiRequest().setUin(groupId);
+        data.getCgiRequest().setUid(uid);
+        return data;
+    }
+    /**
+     * 退出群聊
+     */
+    public static FileData leaveTheGroupBody(long groupId){
+        FileData data = new FileData();
+        data.setCgiCmd("SsoGroup.Op");
+        data.setCgiRequest(new CgiRequest());
+        data.getCgiRequest().setOpCode(4247L);
+        data.getCgiRequest().setUin(groupId);
+        return data;
+    }
 }

@@ -1,9 +1,7 @@
 package opq.bot.frame.event.impl;
 
 import opq.bot.frame.constants.SourceType;
-import opq.bot.frame.data.AtUinLists;
-import opq.bot.frame.data.FileBody;
-import opq.bot.frame.data.ResultData;
+import opq.bot.frame.data.*;
 import opq.bot.frame.event.OpqMessageEvent;
 import opq.bot.frame.utils.OpqUtils;
 import org.springframework.http.HttpEntity;
@@ -98,5 +96,12 @@ public class GroupMessageEvent extends OpqMessageEvent {
     }
     public String msgBody(String content,long groupId,List<FileBody> imageList,List<AtUinLists> atUinLists){
        return OpqUtils.msgBody(SourceType.GROUP.getType(),content,groupId,imageList, atUinLists);
+    }
+    /**
+     * 退群
+     */
+    public ResultEventData leaveTheGroup(){
+        FileData data = OpqUtils.leaveTheGroupBody(getGroup().getGroupCode());
+        return sendMsg(getSelfId(),OpqUtils.toJsonString(data),ResultEventData.class);
     }
 }

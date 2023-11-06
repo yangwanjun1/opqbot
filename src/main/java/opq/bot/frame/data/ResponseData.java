@@ -24,4 +24,10 @@ public class ResponseData {
 
     @JsonProperty("FileId")
     private Long fileId;
+    @JsonProperty("Status")
+    private String status;
+    @JsonProperty("Uid")
+    private String  uid;
+    @JsonProperty("Uin")
+    private String uin;
 }

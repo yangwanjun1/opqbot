@@ -27,9 +27,6 @@
 opq:
   ws: ws://127.0.0.1:9000/ws  #ws连接地址
 ```
-出现下图红色框说明连接上了opq
-
-![img.png](img.png)
 
 通过下面的例子，实现消息的收发
 ```java
@@ -63,7 +60,7 @@ public class OpqEvent {
     @OpqListener(type = RedBagMessageEvent.class)
     public void red(RedBagMessageEvent event){
         if (event.getGroup()!=null){//空时为转账
-            OnRedResult onRed = event.onRed(event.getRedBag());
+            OnRedResult onRed = event.onRed();
             log.info("打开{}的红包，获得{}元",event.getGroup().getGroupCard(),onRed.getResponseData().getGetMoney()/100);
         }
     }

@@ -39,4 +39,16 @@ public class CgiRequest {
     private String  fileUrl;
     @JsonProperty("Base64Buf")
     private String  base64Buf;
+    @JsonProperty("OpCode")
+    private Long  opCode;
+    @JsonProperty("Uin")
+    private Long  uin;
+    @JsonProperty("BanTime")
+    private Integer  banTime;
+    @JsonProperty("MsgSeq")
+    private Long msgSeq;
+    @JsonProperty("MsgRandom")
+    private Long msgRandom;
+    @JsonProperty("Uid")
+    private String uid;
 }

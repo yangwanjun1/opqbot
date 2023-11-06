@@ -34,25 +34,13 @@ import static opq.bot.frame.utils.OpqUtils.isAtMe;
 @Component
 @Slf4j
 public class HandlerEvent {
-    @EventListener
-    public void wsReconnected(WsListenerEvent wsListenerEvent) throws InterruptedException {
-        WebSocketClient client = (WebSocketClient) wsListenerEvent.getSource();
-        int count = 0;
-        while (client.isClosed() && ++count <= 50) {
-            log.error("正在尝试第{}次重连",count);
-            client.reconnect();
-            Thread.sleep(1000);
-        }
-        if (client.isClosed()){
-            log.error("重连次数达到限制，请检查服务是否正常");
-        }
-    }
 
     @EventListener
     public void handler(OpqListenerEvent obj) {
         try {
             String message = obj.getSource().toString();
             JsonNode object = OpqUtils.getMapper().readTree(message);
+            //处理其他事件（登录 网络变化事 好友相关事件 为空）
             if (Objects.nonNull(object.get("CurrentPacket").get("EventData").get("MsgType"))) {
                 return;
             }
