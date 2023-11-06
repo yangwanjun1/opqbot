@@ -184,4 +184,14 @@ public class OpqUtils {
         data.getCgiRequest().setUin(groupId);
         return data;
     }
+    /**
+     * 获取uin
+     */
+    public static QueryUinBody queryUin(String uid){
+        QueryUinBody queryUinBody = new QueryUinBody();
+        CgiRequest request = new CgiRequest();
+        request.setUid(uid);
+        queryUinBody.setCgiRequest(request);
+        return queryUinBody;
+    }
 }

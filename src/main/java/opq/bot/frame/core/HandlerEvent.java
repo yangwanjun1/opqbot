@@ -6,15 +6,12 @@ import opq.bot.frame.annotation.OpqListener;
 import opq.bot.frame.constants.Action;
 import opq.bot.frame.constants.SourceType;
 import opq.bot.frame.data.*;
-import opq.bot.frame.event.OpqListenerEvent;
-import opq.bot.frame.event.OpqMessageEvent;
-import opq.bot.frame.event.WsListenerEvent;
+import opq.bot.frame.event.*;
 import opq.bot.frame.event.impl.FriendMessageEvent;
 import opq.bot.frame.event.impl.GroupMessageEvent;
 import opq.bot.frame.event.impl.RedBagMessageEvent;
 import opq.bot.frame.event.impl.TemporarilyMessageEvent;
 import opq.bot.frame.utils.OpqUtils;
-import org.java_websocket.client.WebSocketClient;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -29,11 +26,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static opq.bot.frame.core.OpqThreadPoll.getThreadPoll;
-import static opq.bot.frame.utils.OpqUtils.isAtALL;
-import static opq.bot.frame.utils.OpqUtils.isAtMe;
+import static opq.bot.frame.utils.OpqUtils.*;
+
 @Component
 @Slf4j
 public class HandlerEvent {
+
+    private Pattern pattern = Pattern.compile("^(\\d+)\\b");
 
     @EventListener
     public void handler(OpqListenerEvent obj) {
@@ -41,7 +40,16 @@ public class HandlerEvent {
             String message = obj.getSource().toString();
             JsonNode object = OpqUtils.getMapper().readTree(message);
             //处理其他事件（登录 网络变化事 好友相关事件 为空）
-            if (Objects.nonNull(object.get("CurrentPacket").get("EventData").get("MsgType"))) {
+            JsonNode jsonNodeEvent = object.get("CurrentPacket").get("EventData");
+            if (jsonNodeEvent.get("MsgHead") == null) {
+                return;
+            }
+            JsonNode node = jsonNodeEvent.get("MsgHead").get("MsgType");
+            SourceType fromType = convertType(jsonNodeEvent.get("MsgHead").get("FromType").asInt());
+            if (node != null && otherEvent(object, convertType(node.asInt()), fromType)) {
+                return;
+            }
+            if (jsonNodeEvent.get("MsgBody") == null) {
                 return;
             }
             MessageData data = OpqUtils.toBean(object.toString(), MessageData.class);
@@ -51,28 +59,69 @@ public class HandlerEvent {
             if (senderUin == currentQQ) {
                 return;
             }
-            int fromType = object.get("CurrentPacket").get("EventData").get("MsgHead").get("FromType").asInt();
-            Map<Object, List<Method>> map = EventHandlerAdapter.getEvent(convertType(fromType));
-            if (Objects.isNull(eventData.getMsgBody())) {
+            Map<Object, List<Method>> map = EventHandlerAdapter.getEvent(fromType);
+            if (eventData.getMsgBody()==null) {
                 return;
             }
             if (eventData.getMsgBody().getRedBag() != null) {
                 RedBagMessageEvent event = getBagMessageEvent(eventData, data, senderUin);
-                getThreadPoll().execute(
-                        ()-> EventHandlerAdapter
-                                .getEvent(SourceType.MONEY)
-                                .forEach((key, value) -> handlerRedBag(event, key, value))
-                );
+                getThreadPoll().execute(() -> EventHandlerAdapter.getEvent(SourceType.MONEY).forEach((key, value) -> handlerRedBag(event, key, value)));
                 return;
             }
-            getThreadPoll().execute(
-                    ()-> map.forEach(
-                            (key, value) -> invokeObj(key, value, data, convertType(fromType))
-                    )
-            );
+            execPoll(map, data, fromType);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void execPoll(Map<Object, List<Method>> map, MessageData data, SourceType fromType) {
+        getThreadPoll().execute(() -> map.forEach((key, value) -> invokeObj(key, value, data, fromType)));
+    }
+
+    private boolean otherEvent(JsonNode object, SourceType msgType, SourceType fromType) {
+        if (msgType == SourceType.NONE) {
+            return false;
+        }
+        JsonNode node = object.get("CurrentPacket").get("EventData").get("Event");
+        if (Objects.isNull(node)) {
+            return false;
+        }
+        long currentQQ = object.get("CurrentQQ").asLong();
+        long groupId = object.get("CurrentPacket").get("EventData").get("MsgHead").get("FromUin").asLong();
+        if (msgType == SourceType.FROM_INVITE && fromType == SourceType.GROUP) {//邀请已经处理事件
+            InviteHandlerEvent event = new InviteHandlerEvent();
+            event.setInvitor(node.get("AdminUid").asText());
+            event.setInvitee(node.get("Uid").asText());
+            event.setSelfId(currentQQ);
+            event.setGroupId(groupId);
+            execOther(SourceType.FROM_INVITE, event);
+            return true;
+        }
+        if (msgType == SourceType.FROM_REMOVE && fromType == SourceType.GROUP){
+            ExitGroupEvent event = new ExitGroupEvent();
+            event.setGroupId(groupId);
+            event.setSelfId(currentQQ);
+            event.setUid(object.get("CurrentPacket").get("EventData").get("Event").get("Uid").asText());
+            execOther(SourceType.FROM_REMOVE, event);
+            return true;
+        }
+        return false;
+    }
+
+    public void execOther(SourceType type, OtherEvent otherEvent) {
+        Map<Object, List<Method>> map = EventHandlerAdapter.getEvent(type);
+        getThreadPoll().execute(() ->map.forEach((key, value) -> invite(otherEvent, key, value)));
+    }
+
+    private void invite(OtherEvent event, Object obj, List<Method> methodList) {
+        methodList.forEach(m -> {
+            try {
+                m.invoke(obj, event);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     private static RedBagMessageEvent getBagMessageEvent(EventData eventData, MessageData data, long senderUin) {
@@ -80,7 +129,7 @@ public class HandlerEvent {
         RedBagMessageEvent event = new RedBagMessageEvent();
         event.setRedBag(eventData.getMsgBody().getRedBag());
         event.setMsgId(data.getCurrentPacket().getEventData().getMsgHead().getMsgUid());
-        event.setUserInfo(new UserInfo(senderUin,Objects.isNull(group)?null:group.getGroupCard()));
+        event.setUserInfo(new UserInfo(senderUin, Objects.isNull(group) ? null : group.getGroupCard()));
         event.setSelfId(data.getCurrentQQ());
         event.setRedBag(eventData.getMsgBody().getRedBag());
         return event;
@@ -103,7 +152,7 @@ public class HandlerEvent {
             log.error("listener must hava a event parameter");
             return;
         }
-        event.setUserInfo(new UserInfo(eventData.getMsgHead().getSenderUin(),Objects.isNull(group)?null:group.getGroupCard()));
+        event.setUserInfo(new UserInfo(eventData.getMsgHead().getSenderUin(), Objects.isNull(group) ? null : group.getGroupCard()));
         event.setMsgId(data.getCurrentPacket().getEventData().getMsgHead().getMsgUid());
         event.setVideo(eventData.getMsgBody().getVideo());
         event.setVoice(eventData.getMsgBody().getVoice());
@@ -129,7 +178,7 @@ public class HandlerEvent {
         execResult(list, event, obj);
     }
 
-    private List<Method> filter(List<Method> list,Action action,boolean matcher){
+    private List<Method> filter(List<Method> list, Action action, boolean matcher) {
         return list.stream().filter(m -> {
             OpqListener listener = m.getAnnotation(OpqListener.class);
             return listener.action() == action && (matcher == (!listener.matcher().isEmpty()));
@@ -138,7 +187,7 @@ public class HandlerEvent {
 
 
     private void handlerAt(OpqMessageEvent event, Object obj, List<Method> methodList) {
-        List<Method> list =filter(methodList,Action.AT,true);
+        List<Method> list = filter(methodList, Action.AT, true);
         StringBuilder sb = new StringBuilder(event.getContent());
         for (AtUinLists uinList : Optional.ofNullable(event.getAtUinLists()).orElse(Collections.emptyList())) {
             if (uinList.getUin() == event.getSelfId()) {
@@ -148,24 +197,24 @@ public class HandlerEvent {
                 break;
             }
         }
-        event.setContent(sb.isEmpty()?null:sb.toString().strip());
+        event.setContent(sb.isEmpty() ? null : sb.toString().strip());
         event.setAtUinLists(Optional.ofNullable(
                         event.getAtUinLists()).orElse(Collections.emptyList())
                 .stream().filter(a -> a.getUin() != event.getSelfId()).toList()
         );
         if (!list.isEmpty() && execResult(list, event, obj)) {
-                return;
+            return;
         }
-        List<Method> noMatcher = filter(methodList,Action.AT,false);
+        List<Method> noMatcher = filter(methodList, Action.AT, false);
         noMatcher.forEach(m -> execInvoke(m, event, obj, null));
     }
 
     private void handlerNone(OpqMessageEvent event, Object obj, List<Method> methodList) {
-        List<Method> list = filter(methodList,Action.NONE,true);
+        List<Method> list = filter(methodList, Action.NONE, true);
         if (!list.isEmpty() && execResult(list, event, obj)) {
             return;
         }
-        List<Method> noMatcher = filter(methodList,Action.NONE,false);
+        List<Method> noMatcher = filter(methodList, Action.NONE, false);
         noMatcher.forEach(m -> execInvoke(m, event, obj, null));
     }
 
@@ -213,12 +262,15 @@ public class HandlerEvent {
         return objects;
     }
 
-    public SourceType convertType(int fromType){
-        return switch (fromType){
-            case 1->SourceType.FRIEND;
-            case 2->SourceType.GROUP;
-            case 3->SourceType.TEMPORARILY;
-            default -> SourceType.MONEY;
+    public SourceType convertType(int type) {
+        return switch (type) {
+            case 1 -> SourceType.FRIEND;
+            case 2 -> SourceType.GROUP;
+            case 3 -> SourceType.TEMPORARILY;
+            case 33 -> SourceType.FROM_INVITE;
+            case 34 -> SourceType.FROM_REMOVE;
+            default -> SourceType.NONE;
         };
     }
+
 }

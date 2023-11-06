@@ -4,7 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import opq.bot.frame.annotation.Opq;
 import opq.bot.frame.annotation.OpqListener;
 import opq.bot.frame.constants.SourceType;
-import opq.bot.frame.event.OpqMessageEvent;
+import opq.bot.frame.event.ExitGroupEvent;
+import opq.bot.frame.event.InviteHandlerEvent;
 import opq.bot.frame.event.impl.GroupMessageEvent;
 import opq.bot.frame.event.impl.FriendMessageEvent;
 import opq.bot.frame.event.impl.RedBagMessageEvent;
@@ -34,37 +35,36 @@ public class EventHandlerAdapter implements ApplicationContextAware {
             Method[] methods = obj.getClass().getDeclaredMethods();
             for (Method method : methods) {
                 OpqListener listener = method.getAnnotation(OpqListener.class);
-                if (Objects.isNull(listener)) {
+                if (listener == null) {
                     continue;
                 }
-                Class<? extends OpqMessageEvent> type = listener.type();
+                Class<? extends OpqRequest> type = listener.type();
                 //防止其他未知事件
                 if (FriendMessageEvent.class.equals(type)) {
-                    if (!listenerEventMap.containsKey(SourceType.FRIEND)) {
-                        listenerEventMap.put(SourceType.FRIEND, new HashMap<>());
-                    }
-                    add(SourceType.FRIEND, obj, method);
+                    initLoad(SourceType.FRIEND, obj, method);
                 } else if (GroupMessageEvent.class.equals(type)) {
-                    if (!listenerEventMap.containsKey(SourceType.GROUP)) {
-                        listenerEventMap.put(SourceType.GROUP, new HashMap<>());
-                    }
-                    add(SourceType.GROUP, obj, method);
+                    initLoad(SourceType.GROUP, obj, method);
                 } else if (TemporarilyMessageEvent.class.equals(type)) {
-                    if (!listenerEventMap.containsKey(SourceType.TEMPORARILY)) {
-                        listenerEventMap.put(SourceType.TEMPORARILY, new HashMap<>());
-                    }
-                    add(SourceType.TEMPORARILY, obj, method);
+                    initLoad(SourceType.TEMPORARILY, obj, method);
                 } else if (RedBagMessageEvent.class.equals(type)) {
-                    if (!listenerEventMap.containsKey(SourceType.MONEY)) {
-                        listenerEventMap.put(SourceType.MONEY, new HashMap<>());
-                    }
-                    add(SourceType.MONEY, obj, method);
+                    initLoad(SourceType.MONEY,obj,method);
+                } else if (InviteHandlerEvent.class.equals(type)) {
+                    initLoad(SourceType.FROM_INVITE,obj,method);
+                }else if (ExitGroupEvent.class.equals(type)){
+                    initLoad(SourceType.FROM_REMOVE,obj,method);
                 }
             }
         });
     }
+
+    private void initLoad(SourceType type, Object obj, Method method){
+        if (!listenerEventMap.containsKey(type)) {
+            listenerEventMap.put(type, new HashMap<>());
+        }
+        add(type, obj, method);
+    }
     private void add(SourceType fromType, Object obj, Method method){
-        Map<Object, List<Method>> map = listenerEventMap.get(fromType);
+        Map<Object, List<Method>> map = listenerEventMap.getOrDefault(fromType,new HashMap<>());
         List<Method> list = map.getOrDefault(obj, new ArrayList<>());
         list.add(method);
         map.put(obj,list);

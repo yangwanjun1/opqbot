@@ -69,6 +69,20 @@ public class OpqEvent {
     public void hallo(GroupMessageEvent event){
         log.info("收到at消息:{}",event.getContent());
     }
+    //进群事件
+    @OpqListener(type = InviteHandlerEvent.class)
+    public void g(InviteHandlerEvent e){
+        UserData info = e.getInviteeInfo();
+        log.info("用户《{}》进入了群聊",info.getNick());
+        e.sendGroupMsg(String.format("欢迎 %s 进入群聊", info.getNick()));
+    }
+    //退群事件
+    @OpqListener(type = ExitGroupEvent.class)
+    public void g(ExitGroupEvent e){
+        UserData info = e.getUserInfo();
+        log.info("用户《{}》离开了群聊",info.getNick());
+        e.sendGroupMsg(String.format("用户 %s 离开了我们", info.getNick()));
+    }
 }
 ```
 

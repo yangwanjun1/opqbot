@@ -12,6 +12,7 @@
 .mtj.tmp/
 src/main/resources/META-INF/
 src/main/java/opq/bot/frame/config/OpqAutoConfig.java
+src/main/java/opq/bot/frame/test/QQ.java
 # Package Files #
 *.jar
 *.war
@@ -22,6 +23,7 @@ src/main/java/opq/bot/frame/config/OpqAutoConfig.java
 *.rar
 /target
 /.idea
+*.png
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*

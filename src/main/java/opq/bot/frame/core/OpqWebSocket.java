@@ -36,9 +36,9 @@ public class OpqWebSocket extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        if (EventHandlerAdapter.eventIsEmpty()){
-            return;
-        }
+//        if (EventHandlerAdapter.eventIsEmpty()){
+//            return;
+//        }
         context.publishEvent(new OpqListenerEvent(message));
     }
 

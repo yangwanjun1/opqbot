@@ -5,6 +5,7 @@ package opq.bot.frame.constants;
  */
 public enum SourceType {
     RED_BAG(12),
+    NONE(-1),
     MONEY(0),
     FRIEND(1),
     GROUP(2),
@@ -12,9 +13,9 @@ public enum SourceType {
     TEMPORARILY(3),
     FROM_FRIEND(166),
     FROM_GROUP(82),
-    FROM_REMOVE(34),
-    FROM_INVITE(33),
-    FROM_IN_GROUP(732);
+    FROM_REMOVE(34),    //退群踢人事件
+    FROM_INVITE(33),    //邀请加群事件
+    FROM_IN_GROUP(732); //进群事件
 
     private final int type;
 
