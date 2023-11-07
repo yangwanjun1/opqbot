@@ -4,29 +4,11 @@
 
 ```xml
   <dependencys>
-<!--   图片压缩 -->
-    <dependency>
-        <groupId>net.coobird</groupId>
-        <artifactId>thumbnailator</artifactId>
-        <version>0.4.20</version>
-    </dependency>
-<!--   web依赖 -->
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-        <version>3.1.5</version>
-    </dependency>
-<!--   ws -->
-    <dependency>
-        <groupId>org.java-websocket</groupId>
-        <artifactId>Java-WebSocket</artifactId>
-        <version>1.5.4</version>
-    </dependency>
 <!--   opq -->
     <dependency>
         <groupId>io.github.yangwanjun1</groupId>
         <artifactId>OPQBot</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </dependency>
   </dependencys>
 

@@ -13,6 +13,8 @@ public class ResponseData {
     private Double getMoney;
     @JsonProperty("TotalCount")
     private String totalCount;
+    @JsonProperty("MsgSeq")
+    private String msgSeq;
     @JsonProperty("TotalMoney")
     private Long totalMoney;
     @JsonProperty("FileMd5")

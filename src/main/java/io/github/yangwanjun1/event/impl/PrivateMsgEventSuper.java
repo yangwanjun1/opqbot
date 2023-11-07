@@ -4,7 +4,6 @@ import io.github.yangwanjun1.data.FileBody;
 import io.github.yangwanjun1.data.ResultData;
 import io.github.yangwanjun1.event.OpqMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
-import org.springframework.http.HttpEntity;
 
 import java.io.File;
 import java.util.List;
@@ -55,10 +54,10 @@ public abstract class PrivateMsgEventSuper extends OpqMessageEvent {
      * 发送图文给用户
      */
     public ResultData sendImage(String content,String url,long userId){
-        HttpEntity<String> entity = OpqUtils.uploadImageFileBody(url, getType(), true);
-        FileBody data = uploadImageFile(getSelfId(), entity);
-        String body = msgBody(content,userId,List.of(data));
-        return sendMsg(getSelfId(), body, ResultData.class);
+        String body =  OpqUtils.uploadImageFileBody(url, getType(), true);
+        FileBody data = uploadImageFile(getSelfId(), body);
+        String result = msgBody(content,userId,List.of(data));
+        return sendMsg(getSelfId(), result, ResultData.class);
     }
 
     /**
@@ -79,10 +78,10 @@ public abstract class PrivateMsgEventSuper extends OpqMessageEvent {
     }
 
     public ResultData sendImage(String content,File file,long userId){
-        HttpEntity<String> entity = OpqUtils.uploadImageFileBody(file, getType());
-        FileBody data = uploadImageFile(getSelfId(), entity);
-        String body = msgBody(content,userId, List.of(data));
-        return sendMsg(getSelfId(),body, ResultData.class);
+        String body = OpqUtils.uploadImageFileBody(file, getType());
+        FileBody data = uploadImageFile(getSelfId(), body);
+        String result = msgBody(content,userId, List.of(data));
+        return sendMsg(getSelfId(),result, ResultData.class);
     }
     /**
      * 发送图文列表给用户

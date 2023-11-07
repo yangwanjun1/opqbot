@@ -2,54 +2,48 @@ package io.github.yangwanjun1.core;
 
 
 import io.github.yangwanjun1.data.FileBody;
-import io.github.yangwanjun1.data.ResponseData;
 import io.github.yangwanjun1.data.ResultData;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
+import io.github.yangwanjun1.utils.OpqUtils;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.ContentType;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public interface OpqRequest {
     String host = "http://"+OpqWebSocket.getHost()+"/v1/LuaApiCaller?funcname=MagicCgiCmd&timeout=10&qq=";
-    RestTemplate template =  init();
-    HttpHeaders headers = load();
-    private static HttpHeaders load(){
-        HttpHeaders headers = new HttpHeaders();
-        MediaType type = MediaType.parseMediaType("application/json;charset=UTF-8");
-        headers.setContentType(type);
-        headers.add("Accept", MediaType.APPLICATION_JSON.toString());
-        return headers;
-    }
-    private static RestTemplate init(){
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout(60000);
-        factory.setConnectTimeout(60000);
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setRequestFactory(factory);
-        return restTemplate;
-    }
-
 
     default <T>T sendMsg(long selfId, String body, Class<T> cls){
-        HttpEntity<String> entity = new HttpEntity<>(body,headers);
-        return template.postForObject(host + selfId, entity, cls);
+        Request posted = Request.post(host + selfId);
+        try {
+            posted.bodyString(body, ContentType.APPLICATION_JSON);
+            Response response = posted.execute();
+            String string = response.returnContent().asString(StandardCharsets.UTF_8);
+            return OpqUtils.toBean(string,cls);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
-    default FileBody uploadImageFile(long selfId, HttpEntity<String> entity) {
-        ResultData data = template.postForObject("http://" + OpqWebSocket.getHost() + "/v1/upload?timeout=30&qq=" + selfId, entity, ResultData.class);
-        ResponseData responseData = data.getResponseData();
-        if (responseData == null){
-            throw new RuntimeException("上传失败");
+    default FileBody uploadImageFile(long selfId, String body) {
+        Request posted = Request.post("http://" + OpqWebSocket.getHost() + "/v1/upload?timeout=30&qq=" + selfId);
+        try {
+            posted.bodyString(body, ContentType.APPLICATION_JSON);
+            Response response = posted.execute();
+            String string = response.returnContent().asString(StandardCharsets.UTF_8);
+            ResultData data = OpqUtils.toBean(string, ResultData.class);
+            FileBody file = new FileBody();
+            file.setWidth(3000);
+            file.setHeight(3000);
+            file.setFileMd5(data.getResponseData().getFileMd5());
+            file.setFileSize(data.getResponseData().getFileSize());
+            file.setFileId(data.getResponseData().getFileId());
+            return file;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        FileBody file = new FileBody();
-        file.setWidth(3000);
-        file.setHeight(3000);
-        file.setFileMd5(responseData.getFileMd5());
-        file.setFileSize(responseData.getFileSize());
-        file.setFileId(responseData.getFileId());
-        return file;
     }
 
 }

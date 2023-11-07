@@ -4,7 +4,6 @@ import io.github.yangwanjun1.data.*;
 import io.github.yangwanjun1.event.OpqMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
 import io.github.yangwanjun1.constants.SourceType;
-import org.springframework.http.HttpEntity;
 
 import java.io.File;
 import java.util.List;
@@ -61,7 +60,7 @@ public class GroupMessageEvent extends OpqMessageEvent {
      * 发送图文到群
      */
     public ResultData sendGroupImage(String content,String url){
-        HttpEntity<String> entity = OpqUtils.uploadImageFileBody(url, SourceType.GROUP.getType(), true);
+        String entity = OpqUtils.uploadImageFileBody(url, SourceType.GROUP.getType(), true);
         FileBody data = uploadImageFile(getSelfId(), entity);
         String body = msgBody(content,getGroup().getGroupCode(),List.of(data),null);
         return sendMsg(getSelfId(), body, ResultData.class);
@@ -76,7 +75,7 @@ public class GroupMessageEvent extends OpqMessageEvent {
      * 发送图文到群
      */
     public ResultData sendGroupImage(String content,File file){
-        HttpEntity<String> entity = OpqUtils.uploadImageFileBody(file, SourceType.GROUP.getType());
+        String  entity = OpqUtils.uploadImageFileBody(file, SourceType.GROUP.getType());
         FileBody data = uploadImageFile(getSelfId(), entity);
         String body = msgBody(content,getGroup().getGroupCode(), List.of(data),null);
         return sendMsg(getSelfId(),body, ResultData.class);

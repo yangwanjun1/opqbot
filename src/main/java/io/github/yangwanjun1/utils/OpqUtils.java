@@ -6,12 +6,14 @@ import io.github.yangwanjun1.core.OpqRequest;
 import io.github.yangwanjun1.data.*;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
-import org.springframework.http.*;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.util.*;
 
 public class OpqUtils {
@@ -70,7 +72,7 @@ public class OpqUtils {
      * @param type   上传的资源类型
      * @param toBase 是否转base64
      */
-    public static HttpEntity<String> uploadImageFileBody(String url, int type, boolean toBase) {
+    public static String uploadImageFileBody(String url, int type, boolean toBase) {
         FileData fileData = new FileData();
         fileData.setCgiRequest(new CgiRequest());
         fileData.getCgiRequest().setCommandId(type);
@@ -79,16 +81,15 @@ public class OpqUtils {
         } else {
             fileData.getCgiRequest().setFileUrl(url);
         }
-        return new HttpEntity<>(toJsonString(fileData));
+        return toJsonString(fileData);
     }
 
-    public static HttpEntity<String> uploadImageFileBody(File file, int type) {
+    public static String uploadImageFileBody(File file, int type) {
         FileData fileData = new FileData();
         fileData.setCgiRequest(new CgiRequest());
         fileData.getCgiRequest().setCommandId(type);
         fileData.getCgiRequest().setBase64Buf(compress(file));
-        String string = toJsonString(fileData);
-        return new HttpEntity<>(string);
+        return toJsonString(fileData);
     }
 
     /**
@@ -98,13 +99,12 @@ public class OpqUtils {
      */
     public static String compress(String url) {
         try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
-            ResponseEntity<byte[]> entity = OpqRequest.template.exchange(url, HttpMethod.GET, null, byte[].class);
-            HttpStatusCode code = entity.getStatusCode();
-            byte[] body = Objects.requireNonNull(entity.getBody());
-            if (code != HttpStatus.OK) {
-                throw new RuntimeException(new String(body));
+            Request posted = Request.get(url);
+            Response response = posted.execute();
+            if (response.returnResponse().getCode() != 200) {
+                throw new RuntimeException(response.returnContent().asString());
             }
-            ByteArrayInputStream bois = new ByteArrayInputStream(body);
+            ByteArrayInputStream bois = new ByteArrayInputStream(response.returnContent().asBytes());
             Thumbnails.of(bois).scale(1).outputQuality(0.8).toOutputStream(boas);
             bois.close();
             return Base64.getEncoder().encodeToString(boas.toByteArray());
@@ -194,4 +194,6 @@ public class OpqUtils {
         queryUinBody.setCgiRequest(request);
         return queryUinBody;
     }
+
+
 }
