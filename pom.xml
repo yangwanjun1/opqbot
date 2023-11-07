@@ -8,9 +8,9 @@
         <version>3.1.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>opq.bot.frame</groupId>
+    <groupId>io.github.yangwanjun1</groupId>
     <artifactId>OPQBot</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <name>OPQBot</name>
     <description>OPQBot</description>
     <properties>
@@ -49,22 +49,11 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

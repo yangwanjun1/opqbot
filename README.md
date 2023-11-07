@@ -1,23 +1,32 @@
 ### 基于springboot封装的OpqBot机器人
-本项目是基于OPQ进行封装的一个框架，通过简单的注解即可实现消息的收发，在使用该项目时，说明你已经运行起了你的机器人，并且掌握了一定的编程知识以及会使用springboot， 【项目依赖于springboot-web，请导入web模块】,
-首先下载[opqbot.jar](https://github.com/yangwanjun1/opqbot/releases)包，放到本地并引入项目中【jdk 17+】，并导入下面的依赖
+本项目是基于OPQ进行封装的一个框架，通过简单的注解即可实现消息的收发，在使用该项目时，说明你已经运行起了你的机器人，并且掌握了一定的编程知识以及会使用springboot
+【jdk 17+】， 接下来导入下面的依赖即可
 
 ```xml
   <dependencys>
+<!--   图片压缩 -->
     <dependency>
         <groupId>net.coobird</groupId>
         <artifactId>thumbnailator</artifactId>
         <version>0.4.20</version>
     </dependency>
+<!--   web依赖 -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-web</artifactId>
         <version>3.1.5</version>
     </dependency>
+<!--   ws -->
     <dependency>
         <groupId>org.java-websocket</groupId>
         <artifactId>Java-WebSocket</artifactId>
         <version>1.5.4</version>
+    </dependency>
+<!--   opq -->
+    <dependency>
+        <groupId>io.github.yangwanjun1</groupId>
+        <artifactId>OPQBot</artifactId>
+        <version>1.0.1</version>
     </dependency>
   </dependencys>
 
@@ -26,9 +35,14 @@
 ```yaml
 opq:
   ws: ws://127.0.0.1:9000/ws  #ws连接地址
+  thread-poll:                    #线程池配置，一下参数是默认
+    core: 2
+    max-size: 4
+    keep-alive-time: 30
+    block-size: 50
 ```
 
-通过下面的例子，实现消息的收发
+通过下面的例子，实现消息的收发（一定要在spring扫描到的包下）
 ```java
 
 @Opq

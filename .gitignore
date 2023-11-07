@@ -11,8 +11,8 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 src/main/resources/META-INF/
-src/main/java/opq/bot/frame/config/OpqAutoConfig.java
-src/main/java/opq/bot/frame/test/QQ.java
+src/main/java/io/github/yangwanjun1/config/OpqAutoConfig.java
+src/main/java/io/github/yangwanjun1/test/QQ.java
 # Package Files #
 *.jar
 *.war
