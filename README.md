@@ -4,7 +4,7 @@
 
 ```xml
   <dependencys>
-<!--   opq -->
+<!--   opq 仓库更新可能慢些，可以下载jar使用 -->
     <dependency>
         <groupId>io.github.yangwanjun1</groupId>
         <artifactId>OPQBot</artifactId>
