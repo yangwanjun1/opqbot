@@ -1,6 +1,5 @@
-![](https://avatars.githubusercontent.com/u/91020200?v=4)
-
-###                                                OpqBot
+# <center> ![](https://avatars.githubusercontent.com/u/91020200?v=4)<center/>
+## <center>OPQBOT</center>
 
 本项目是基于OPQ进行封装的一个框架，通过简单的注解即可实现消息的收发，在使用该项目时，说明你已经运行起了你的机器人，并且掌握了一定的编程知识以及会使用springboot
 【jdk 17+】， 接下来导入下面的依赖即可
