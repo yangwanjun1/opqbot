@@ -1,4 +1,7 @@
-### 基于springboot封装的OpqBot机器人
+![](https://avatars.githubusercontent.com/u/91020200?v=4)
+
+###                                                OpqBot
+
 本项目是基于OPQ进行封装的一个框架，通过简单的注解即可实现消息的收发，在使用该项目时，说明你已经运行起了你的机器人，并且掌握了一定的编程知识以及会使用springboot
 【jdk 17+】， 接下来导入下面的依赖即可
 
@@ -13,7 +16,9 @@
   </dependencys>
 
 ```
+
 配置yaml
+
 ```yaml
 opq:
   ws: ws://127.0.0.1:9000/ws  #ws连接地址
@@ -27,8 +32,8 @@ opq:
 ```
 
 通过下面的例子，实现消息的收发（一定要在spring扫描到的包下）
-```java
 
+```java
 @Opq
 @Component
 @Slf4j
