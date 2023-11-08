@@ -1,5 +1,6 @@
 package io.github.yangwanjun1.core;
 
+import io.github.yangwanjun1.event.GroupNoticeEvent;
 import lombok.extern.slf4j.Slf4j;
 import io.github.yangwanjun1.annotation.Opq;
 import io.github.yangwanjun1.annotation.OpqListener;
@@ -52,6 +53,8 @@ public class EventHandlerAdapter implements ApplicationContextAware {
                     initLoad(SourceType.FROM_INVITE,obj,method);
                 }else if (ExitGroupEvent.class.equals(type)){
                     initLoad(SourceType.FROM_REMOVE,obj,method);
+                }else if (GroupNoticeEvent.class.equals(type)){
+                    initLoad(SourceType.NOTICE,obj,method);
                 }
             }
         });

@@ -1,5 +1,6 @@
 package io.github.yangwanjun1.event.impl;
 
+import io.github.yangwanjun1.data.EventData;
 import io.github.yangwanjun1.data.FileBody;
 import io.github.yangwanjun1.data.ResultData;
 import io.github.yangwanjun1.event.OpqMessageEvent;
@@ -8,8 +9,15 @@ import io.github.yangwanjun1.utils.OpqUtils;
 import java.io.File;
 import java.util.List;
 
+/**
+ * 个人消息事件父类
+ */
 public abstract class PrivateMsgEventSuper extends OpqMessageEvent {
-    
+
+    public PrivateMsgEventSuper(EventData eventData, long currentQQ) {
+        super(eventData,currentQQ);
+    }
+
     public abstract int getType();
     /**
      * 回复用户

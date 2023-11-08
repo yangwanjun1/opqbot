@@ -2,7 +2,6 @@ package io.github.yangwanjun1.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.yangwanjun1.core.OpqRequest;
 import io.github.yangwanjun1.data.*;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
@@ -13,7 +12,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.http.HttpClient;
 import java.util.*;
 
 public class OpqUtils {
@@ -142,7 +140,7 @@ public class OpqUtils {
         FileData data = new FileData();
         data.setCgiCmd("SsoGroup.Op");
         data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(4691L);
+        data.getCgiRequest().setOpCode(4691);
         data.getCgiRequest().setUin(groupId);
         data.getCgiRequest().setMsgSeq(msgSeq);
         data.getCgiRequest().setMsgRandom(msgRandom);
@@ -155,7 +153,7 @@ public class OpqUtils {
         FileData data = new FileData();
         data.setCgiCmd("SsoGroup.Op");
         data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(4691L);
+        data.getCgiRequest().setOpCode(4691);
         data.getCgiRequest().setUin(groupId);
         data.getCgiRequest().setUid(uid);
         data.getCgiRequest().setBanTime(time);
@@ -168,7 +166,7 @@ public class OpqUtils {
         FileData data = new FileData();
         data.setCgiCmd("SsoGroup.Op");
         data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(2208L);
+        data.getCgiRequest().setOpCode(2208);
         data.getCgiRequest().setUin(groupId);
         data.getCgiRequest().setUid(uid);
         return data;
@@ -180,7 +178,7 @@ public class OpqUtils {
         FileData data = new FileData();
         data.setCgiCmd("SsoGroup.Op");
         data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(4247L);
+        data.getCgiRequest().setOpCode(4247);
         data.getCgiRequest().setUin(groupId);
         return data;
     }
@@ -194,6 +192,11 @@ public class OpqUtils {
         queryUinBody.setCgiRequest(request);
         return queryUinBody;
     }
-
+    /**
+     * 时间戳转时间
+     */
+    public static Date date(long time){
+        return new Date(time * 1000);
+    }
 
 }

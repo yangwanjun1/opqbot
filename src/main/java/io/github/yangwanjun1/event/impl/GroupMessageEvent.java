@@ -1,15 +1,23 @@
 package io.github.yangwanjun1.event.impl;
 
+import io.github.yangwanjun1.constants.SourceType;
 import io.github.yangwanjun1.data.*;
 import io.github.yangwanjun1.event.OpqMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
-import io.github.yangwanjun1.constants.SourceType;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 群消息事件
+ */
 public class GroupMessageEvent extends OpqMessageEvent {
+
+
+    public GroupMessageEvent(EventData eventData, long currentQQ) {
+        super(eventData,currentQQ);
+    }
 
     /**
      * 回复群用户

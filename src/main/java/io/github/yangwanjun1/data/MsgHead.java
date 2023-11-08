@@ -40,6 +40,6 @@ public class MsgHead {
     private GroupInfo groupInfo;
 
     @JsonProperty("C2CTempMessageHead")
-    private String tempMessageHead;
+    private C2CTempMessageHead tempMessageHead;
 
 }

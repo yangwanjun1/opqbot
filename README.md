@@ -4,11 +4,11 @@
 
 ```xml
   <dependencys>
-<!--   opq 仓库更新可能慢些，可以下载jar使用 -->
+<!--   opq已经上传至中央仓库 仓库更新可能慢些，可在release先下载jar使用 -->
     <dependency>
         <groupId>io.github.yangwanjun1</groupId>
         <artifactId>OPQBot</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
     </dependency>
   </dependencys>
 
@@ -22,6 +22,8 @@ opq:
     max-size: 4
     keep-alive-time: 30
     block-size: 50
+  enabled-task: true        #是否开启ws自动重连
+  close-exception: false    #是否开启异常抛出，关闭时以日志形式打印异常信息
 ```
 
 通过下面的例子，实现消息的收发（一定要在spring扫描到的包下）
@@ -79,7 +81,24 @@ public class OpqEvent {
         log.info("用户《{}》离开了群聊",info.getNick());
         e.sendGroupMsg(String.format("用户 %s 离开了我们", info.getNick()));
     }
+
+    //临时消息
+    @OpqListener(type = TemporarilyMessageEvent.class)
+    public void temporarily(TemporarilyMessageEvent e){
+        System.out.println("收到临时消息:"+e.getContent());
+    }
+    //退群事件
+    @OpqListener(type = ExitGroupEvent.class)
+    public void exit(ExitGroupEvent e){
+        String mark = e.getUserInfo().getMark();
+        e.sendGroupMsg(String.format("%s 离开了我们", mark));
+    }
+    //群通知事件，可根据事件类型eventType判断处理（此处会推送bot未处理的群消息通知)
+    @OpqListener(type = GroupNoticeEvent.class)
+    public void notice(GroupNoticeEvent e){
+        System.out.println("收到群通知事件:"+e.getGroupName());
+    }
 }
 ```
 
-项目目前还在开发中（后续事件在逐渐完善）
+项目目前还在开发中（后续事件在逐渐完善，如出现问题，欢迎进行反馈，一个人的能力是有限的，需要大家一起努力维护）

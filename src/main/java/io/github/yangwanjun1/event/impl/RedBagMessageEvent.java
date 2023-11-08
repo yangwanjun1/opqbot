@@ -1,13 +1,18 @@
 package io.github.yangwanjun1.event.impl;
 
-import io.github.yangwanjun1.data.OnRedResult;
-import io.github.yangwanjun1.data.RedBody;
-import io.github.yangwanjun1.data.ResultData;
+import io.github.yangwanjun1.constants.SourceType;
+import io.github.yangwanjun1.data.*;
 import io.github.yangwanjun1.event.OpqMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
-import io.github.yangwanjun1.constants.SourceType;
 
+/**
+ * 红包事件
+ */
 public class RedBagMessageEvent extends OpqMessageEvent {
+
+    public RedBagMessageEvent(EventData eventData,long selfId,long senderUin) {
+        super(eventData,selfId);
+    }
 
     public OnRedResult openRedBag(){
         this.getRedBag().setFromType(SourceType.ON_RED_BAG.getType());

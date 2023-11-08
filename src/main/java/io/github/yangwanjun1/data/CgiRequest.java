@@ -40,7 +40,7 @@ public class CgiRequest {
     @JsonProperty("Base64Buf")
     private String  base64Buf;
     @JsonProperty("OpCode")
-    private Long  opCode;
+    private Integer  opCode;
     @JsonProperty("Uin")
     private Long  uin;
     @JsonProperty("BanTime")
@@ -51,4 +51,8 @@ public class CgiRequest {
     private Long msgRandom;
     @JsonProperty("Uid")
     private String uid;
+    @JsonProperty("MsgType")
+    private Integer msgType;
+    @JsonProperty("GroupCode")
+    private Long groupCode;
 }
