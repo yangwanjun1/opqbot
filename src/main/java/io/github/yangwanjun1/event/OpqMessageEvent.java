@@ -2,22 +2,26 @@ package io.github.yangwanjun1.event;
 
 import io.github.yangwanjun1.core.OpqRequest;
 import io.github.yangwanjun1.data.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-@Data
+@Getter
 public abstract class OpqMessageEvent implements OpqRequest {
-    private long selfId;
-    private GroupInfo group;
-    private UserInfo userInfo;
-    private RedBag redBag;
+    private final long selfId;
+    private final GroupInfo group;
+    private final UserInfo userInfo;
+    private final RedBag redBag;
+    @Setter
     private String content;
-    private long msgId;
-    private FileBody video;
-    private FileBody voice;
+    private final long msgId;
+    private final FileBody video;
+    private final FileBody voice;
+    @Setter
     private List<FileBody> images;
+    @Setter
     private List<AtUinLists> atUinLists;
 
     public OpqMessageEvent(EventData eventData, long currentQQ) {

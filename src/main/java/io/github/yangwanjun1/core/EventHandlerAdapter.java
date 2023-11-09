@@ -1,5 +1,6 @@
 package io.github.yangwanjun1.core;
 
+import io.github.yangwanjun1.event.FriendRequestEvent;
 import io.github.yangwanjun1.event.GroupNoticeEvent;
 import lombok.extern.slf4j.Slf4j;
 import io.github.yangwanjun1.annotation.Opq;
@@ -35,10 +36,10 @@ public class EventHandlerAdapter implements ApplicationContextAware {
         beans.forEach((key, obj) -> {
             Method[] methods = obj.getClass().getDeclaredMethods();
             for (Method method : methods) {
-                OpqListener listener = method.getAnnotation(OpqListener.class);
-                if (listener == null) {
+                if (!method.isAnnotationPresent(OpqListener.class)) {
                     continue;
                 }
+                OpqListener listener = method.getAnnotation(OpqListener.class);
                 Class<? extends OpqRequest> type = listener.type();
                 //防止其他未知事件
                 if (FriendMessageEvent.class.equals(type)) {
@@ -55,6 +56,8 @@ public class EventHandlerAdapter implements ApplicationContextAware {
                     initLoad(SourceType.FROM_REMOVE,obj,method);
                 }else if (GroupNoticeEvent.class.equals(type)){
                     initLoad(SourceType.NOTICE,obj,method);
+                }else if (FriendRequestEvent.class.equals(type)){
+                    initLoad(SourceType.FRIEND_REQUEST,obj,method);
                 }
             }
         });

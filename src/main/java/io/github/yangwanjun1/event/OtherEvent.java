@@ -1,14 +1,14 @@
 package io.github.yangwanjun1.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.yangwanjun1.constants.SourceType;
 import io.github.yangwanjun1.core.OpqRequest;
+import io.github.yangwanjun1.data.QueryUinResult;
 import io.github.yangwanjun1.data.ResultData;
-import io.github.yangwanjun1.utils.OpqUtils;
 import io.github.yangwanjun1.data.UserData;
+import io.github.yangwanjun1.utils.OpqUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.util.Assert;
 
 import java.util.Objects;
 
@@ -20,22 +20,17 @@ public abstract class OtherEvent implements OpqRequest {
 
     public UserData request(String uid){
         String body = OpqUtils.toJsonString(OpqUtils.queryUin(uid));
-        try {
-            String query = sendMsg(selfId, body, String.class);
-            JsonNode node = OpqUtils.getMapper().readTree(query).get("ResponseData").get(0);
-            if (Objects.isNull(node)){
-                return null;
-            }
-            return  OpqUtils.toBean(node.toString(), UserData.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        QueryUinResult queryUinResult = sendMsg(selfId, body, QueryUinResult.class);
+        if (Objects.isNull(queryUinResult) || queryUinResult.getCgiBaseResponse().getRet() != 0){
+            return new UserData();
         }
+        return queryUinResult.getResponseData().get(0);
     }
-
     /**
      * 发送群消息
      */
     public void sendGroupMsg(String content){
+        Assert.isTrue(groupId!=0,"不存在的群");
         String body = OpqUtils.msgBody(SourceType.GROUP.getType(),content,groupId,null,null);
         sendMsg(getSelfId(), body, ResultData.class);
     }

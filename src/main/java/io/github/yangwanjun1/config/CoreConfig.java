@@ -24,8 +24,7 @@ public class CoreConfig {
 
     @Bean
     public OpqWebSocket webSocketClient(ApplicationContext context) throws URISyntaxException {
-        OpqWebSocket socket = new OpqWebSocket(new URI(properties.getWs()),new Draft_6455());
-        socket.setContext(context);
+        OpqWebSocket socket = new OpqWebSocket(new URI(properties.getWs()),new Draft_6455(),properties.getWelcome(),context);
         socket.connect();
         if (properties.getEnabledTask()) {
             new Timer().schedule(new WsTask(socket), 5000, 1000);

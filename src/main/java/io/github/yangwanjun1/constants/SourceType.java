@@ -11,6 +11,7 @@ public enum SourceType {
     GROUP(2),
     NOTICE(5),
     ON_RED_BAG(1),
+    FRIEND_REQUEST(11),
     TEMPORARILY(3),
     FROM_FRIEND(166),
     FROM_GROUP(82),

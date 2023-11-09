@@ -7,6 +7,7 @@ import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
+import org.springframework.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -70,23 +71,23 @@ public class OpqUtils {
      * @param type   上传的资源类型
      * @param toBase 是否转base64
      */
-    public static String uploadImageFileBody(String url, int type, boolean toBase) {
+    public static String uploadImageFileBody(String url, int type, boolean toBase,double q) {
         FileData fileData = new FileData();
         fileData.setCgiRequest(new CgiRequest());
         fileData.getCgiRequest().setCommandId(type);
         if (toBase) {
-            fileData.getCgiRequest().setBase64Buf(compress(url));
+            fileData.getCgiRequest().setBase64Buf(compress(url,q));
         } else {
             fileData.getCgiRequest().setFileUrl(url);
         }
         return toJsonString(fileData);
     }
 
-    public static String uploadImageFileBody(File file, int type) {
+    public static String uploadImageFileBody(File file, int type,double q) {
         FileData fileData = new FileData();
         fileData.setCgiRequest(new CgiRequest());
         fileData.getCgiRequest().setCommandId(type);
-        fileData.getCgiRequest().setBase64Buf(compress(file));
+        fileData.getCgiRequest().setBase64Buf(compress(file,q));
         return toJsonString(fileData);
     }
 
@@ -95,15 +96,13 @@ public class OpqUtils {
      *
      * @param url 网络地址
      */
-    public static String compress(String url) {
+    public static String compress(String url,double q) {
         try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
             Request posted = Request.get(url);
             Response response = posted.execute();
-            if (response.returnResponse().getCode() != 200) {
-                throw new RuntimeException(response.returnContent().asString());
-            }
+            Assert.isTrue(response.returnResponse().getCode() != 200,response.returnContent().asString());
             ByteArrayInputStream bois = new ByteArrayInputStream(response.returnContent().asBytes());
-            Thumbnails.of(bois).scale(1).outputQuality(0.8).toOutputStream(boas);
+            Thumbnails.of(bois).scale(1).outputQuality(q).toOutputStream(boas);
             bois.close();
             return Base64.getEncoder().encodeToString(boas.toByteArray());
         } catch (IOException e) {
@@ -111,9 +110,9 @@ public class OpqUtils {
         }
     }
 
-    public static String compress(File file) {
+    public static String compress(File file,double q) {
         try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
-            Thumbnails.of(file).scale(1).outputQuality(0.8).toOutputStream(boas);
+            Thumbnails.of(file).scale(1).outputQuality(q).toOutputStream(boas);
             return Base64.getEncoder().encodeToString(boas.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -51,6 +51,8 @@ public class CgiRequest {
     private Long msgRandom;
     @JsonProperty("Uid")
     private String uid;
+    @JsonProperty("ReqUid")
+    private String reqUid;
     @JsonProperty("MsgType")
     private Integer msgType;
     @JsonProperty("GroupCode")

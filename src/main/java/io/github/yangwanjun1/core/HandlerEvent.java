@@ -13,10 +13,10 @@ import io.github.yangwanjun1.event.impl.GroupMessageEvent;
 import io.github.yangwanjun1.event.impl.RedBagMessageEvent;
 import io.github.yangwanjun1.event.impl.TemporarilyMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,8 +35,6 @@ import static io.github.yangwanjun1.utils.OpqUtils.isAtMe;
 @Component
 @Slf4j
 public class HandlerEvent {
-    @Resource(name = "opqProperties")
-    private OpqProperties properties;
     @EventListener
     public void handler(OpqListenerEvent obj) {
         try {
@@ -70,11 +68,7 @@ public class HandlerEvent {
             execPoll(EventHandlerAdapter.getEvent(fromType), data, fromType);
         }
         catch (Exception e) {
-            if (!properties.getCloseException()){
-                e.printStackTrace();
-            }else{
-                log.error("{}",e.getMessage());
-            }
+            e.printStackTrace();
         }
     }
 
@@ -83,11 +77,10 @@ public class HandlerEvent {
         JsonNode msgType = jsonNodeEvent.get("MsgType");
         if (!isNull(status) && status.asInt() == 1 && !isNull(msgType)){
             GroupNoticeEvent event = new GroupNoticeEvent(jsonNodeEvent,msgType,currentQQ);
-            EventHandlerAdapter.getEvent(SourceType.NOTICE).forEach((k,v)->{
-                invokeNotice(event,k,v);
-            });
-        } else if (isNull(msgType)) {
-//            status = 1 Src=验证信息 SrcId=3041（此时bot状态为加好友需要验证）
+            EventHandlerAdapter.getEvent(SourceType.NOTICE).forEach((k,v)-> invokeNotice(event,k,v));
+        } else if (isNull(msgType) && !isNull(status) && status.asInt() == 1) {
+            FriendRequestEvent event = new FriendRequestEvent(jsonNodeEvent,currentQQ);
+            EventHandlerAdapter.getEvent(SourceType.FRIEND_REQUEST).forEach((k,v)-> invokeNotice(event,k,v));
         }
     }
 
@@ -133,7 +126,7 @@ public class HandlerEvent {
         });
 
     }
-    private void invokeNotice(GroupNoticeEvent event, Object obj, List<Method> methodList) {
+    private void invokeNotice(OpqRequest event, Object obj, List<Method> methodList) {
         methodList.forEach(m -> {
             try {
                 m.invoke(obj, event);
@@ -152,10 +145,7 @@ public class HandlerEvent {
             case TEMPORARILY -> new TemporarilyMessageEvent( data.getCurrentPacket().getEventData(),data.getCurrentQQ());
             default -> null;
         };
-        if (event == null) {
-            log.error("listener must hava a event parameter");
-            return;
-        }
+        Assert.notNull(event,"Unknown event");
         if (isAtMe(event.getAtUinLists(), event.getSelfId()) && !isAtALL(event.getAtUinLists())) {
             handlerAt(event, obj, methodList);
         } else {

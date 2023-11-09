@@ -1,6 +1,7 @@
 package io.github.yangwanjun1.event;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.yangwanjun1.constants.OptionType;
 import io.github.yangwanjun1.core.OpqRequest;
 import io.github.yangwanjun1.data.CgiRequest;
 import io.github.yangwanjun1.data.GroupRequestBody;
@@ -43,12 +44,13 @@ public class GroupNoticeEvent implements OpqRequest {
     }
 
     /**
-     * @param opCode 1同意2拒绝3忽略
+     * 根据事件类型进行处理
+     * 如果 eventType群可管理事件（即【bot为管理员可处理加群申请，否则仅可以处理被邀请事件】），
      */
-    public ResultData handlerNotice(Integer opCode){
+    public ResultData handlerNotice(OptionType opCode){
         GroupRequestBody body = new GroupRequestBody();
         body.setCgiRequest(new CgiRequest());
-        body.getCgiRequest().setOpCode(opCode);
+        body.getCgiRequest().setOpCode(opCode.getType());
         body.getCgiRequest().setMsgSeq(msgSeq);
         body.getCgiRequest().setMsgType(1);
         body.getCgiRequest().setGroupCode(groupCode);

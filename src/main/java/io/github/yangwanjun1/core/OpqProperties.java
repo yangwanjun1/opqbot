@@ -19,12 +19,11 @@ public class OpqProperties {
     /**
      * 是否开启自动重连(默认false)，会开启一个定时任务
      */
-    private Boolean enabledTask = false;
-
+    private Boolean enabledTask = true;
     /**
-     * 是否关闭异常抛出，以日志的方式打印(默认开启)
+     * 控制台欢迎语（默认：欢迎使用opqbot）
      */
-    private Boolean closeException = false;
+    private String welcome = "欢迎使用OPQBOT";
     public ThreadPollProperties getThreadPoll() {
         if (threadPoll == null){
             threadPoll = new ThreadPollProperties();

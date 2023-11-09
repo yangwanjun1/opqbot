@@ -58,32 +58,32 @@ public class GroupMessageEvent extends OpqMessageEvent {
     }
 
     /**
-     * 发送网络图片到群
+     * 发送网络图片到群(q压缩质量，1不压缩)
      */
-    public ResultData sendGroupImage(String url){
-        return sendGroupImage(null,url);
+    public ResultData sendGroupImage(String url,double q){
+        return sendGroupImage(null,url,q);
     }
 
     /**
-     * 发送图文到群
+     * 发送图文到群(q压缩质量，1不压缩)
      */
-    public ResultData sendGroupImage(String content,String url){
-        String entity = OpqUtils.uploadImageFileBody(url, SourceType.GROUP.getType(), true);
+    public ResultData sendGroupImage(String content,String url,double q){
+        String entity = OpqUtils.uploadImageFileBody(url, SourceType.GROUP.getType(), true,q);
         FileBody data = uploadImageFile(getSelfId(), entity);
         String body = msgBody(content,getGroup().getGroupCode(),List.of(data),null);
         return sendMsg(getSelfId(), body, ResultData.class);
     }
     /**
-     * 发送本地图片到群
+     * 发送本地图片到群(q压缩质量，1不压缩)
      */
-    public ResultData sendGroupImage(File file){
-        return sendGroupImage(null,file);
+    public ResultData sendGroupImage(File file,double q){
+        return sendGroupImage(null,file,q);
     }
     /**
-     * 发送图文到群
+     * 发送图文到群(q压缩质量，1不压缩)
      */
-    public ResultData sendGroupImage(String content,File file){
-        String  entity = OpqUtils.uploadImageFileBody(file, SourceType.GROUP.getType());
+    public ResultData sendGroupImage(String content,File file,double q){
+        String  entity = OpqUtils.uploadImageFileBody(file, SourceType.GROUP.getType(),q);
         FileBody data = uploadImageFile(getSelfId(), entity);
         String body = msgBody(content,getGroup().getGroupCode(), List.of(data),null);
         return sendMsg(getSelfId(),body, ResultData.class);

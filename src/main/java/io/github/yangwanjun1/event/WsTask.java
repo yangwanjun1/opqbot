@@ -20,6 +20,9 @@ public class WsTask extends TimerTask {
             count = 1;
             return;
         }
+        if (count == 1){
+            log.error("连接断开，正在尝试连接...");
+        }
         if (count > 100){
             cancel();
             log.info("连接达到限制，请检查网络是否正常");

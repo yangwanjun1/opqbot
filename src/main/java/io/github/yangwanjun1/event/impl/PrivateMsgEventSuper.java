@@ -42,51 +42,51 @@ public abstract class PrivateMsgEventSuper extends OpqMessageEvent {
     }
 
     /**
-     * 发送图片给指定用户
+     * 发送图片给指定用户(q压缩质量，1不压缩)
      */
     public ResultData sendImage(List<FileBody> imageList,long userId){
         return sendImage(null,imageList,userId);
     }
 
     /**
-     * 发送网络图片
+     * 发送网络图片(q压缩质量，1不压缩)
      */
-    public ResultData sendImage(String url){
-        return sendImage(url,getUserInfo().getUserId());
+    public ResultData sendImage(String url,double q){
+        return sendImage(url,getUserInfo().getUserId(),q);
     }
-    public ResultData sendImage(String url,long userId){
-        return sendImage(null,url,userId);
+    public ResultData sendImage(String url,long userId,double q){
+        return sendImage(null,url,userId,q);
     }
 
     /**
-     * 发送图文给用户
+     * 发送图文给用户(q压缩质量，1不压缩)
      */
-    public ResultData sendImage(String content,String url,long userId){
-        String body =  OpqUtils.uploadImageFileBody(url, getType(), true);
+    public ResultData sendImage(String content,String url,long userId,double q){
+        String body =  OpqUtils.uploadImageFileBody(url, getType(), true,q);
         FileBody data = uploadImageFile(getSelfId(), body);
         String result = msgBody(content,userId,List.of(data));
         return sendMsg(getSelfId(), result, ResultData.class);
     }
 
     /**
-     * 发送本地图片
+     * 发送本地图片(q压缩质量，1不压缩)
      */
-    public ResultData sendImage(File file){
-        return sendImage(file,getUserInfo().getUserId());
+    public ResultData sendImage(File file,double q){
+        return sendImage(file,getUserInfo().getUserId(),q);
     }
-    public ResultData sendImage(File file,long userId){
-        return sendImage(null,file,userId);
+    public ResultData sendImage(File file,long userId,double q){
+        return sendImage(null,file,userId,q);
     }
 
     /**
-     * 发送图文
+     * 发送图文(q压缩质量，1不压缩)
      */
-    public ResultData sendImage(String content,File file){
-        return sendImage(content,file,getUserInfo().getUserId());
+    public ResultData sendImage(String content,File file,double q){
+        return sendImage(content,file,getUserInfo().getUserId(),q);
     }
 
-    public ResultData sendImage(String content,File file,long userId){
-        String body = OpqUtils.uploadImageFileBody(file, getType());
+    public ResultData sendImage(String content,File file,long userId,double q){
+        String body = OpqUtils.uploadImageFileBody(file, getType(),q);
         FileBody data = uploadImageFile(getSelfId(), body);
         String result = msgBody(content,userId, List.of(data));
         return sendMsg(getSelfId(),result, ResultData.class);
