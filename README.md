@@ -43,7 +43,7 @@ public class OpqEvent {
         if (event.getContent()!=null) {
             log.info("收到群《{}》->《{}》的消息:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getContent());
         }
-        //这是组合式消息，请根据需求进行判断
+//这是组合式消息，请根据需求进行判断
 //        if (event.getImages()!=null){
 //            log.info("收到群《{}》->《{}》的图片:", event.getGroup().getGroupName(), event.getGroup().getGroupCard());
 //            event.getImages().forEach(i-> System.out.println(i.getUrl()));
@@ -102,6 +102,7 @@ public class OpqEvent {
     public void notice(GroupNoticeEvent e){
         System.out.println("收到群通知事件:"+e.getGroupName());
     }
+    //好友请求
     @OpqListener(type = FriendRequestEvent.class)
     public void request(FriendRequestEvent e){
         UserData data = e.getRequester();
