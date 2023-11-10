@@ -10,7 +10,7 @@
     <dependency>
         <groupId>io.github.yangwanjun1</groupId>
         <artifactId>OPQBot</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.5</version>
     </dependency>
   </dependencys>
 
