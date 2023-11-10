@@ -18,7 +18,7 @@ public class InviteHandlerEvent extends OtherEvent {
     @JsonProperty("Invitee")
     private String invitee; //被邀请人uid
     @JsonProperty("Invitor")
-    private String invitor;//邀请人uid
+    private String invitor;//邀请人uid(处理人)
     @JsonProperty("Tips")
     private String tips;
     private UserData inviteeInfo;
@@ -41,7 +41,7 @@ public class InviteHandlerEvent extends OtherEvent {
 
     public InviteHandlerEvent(JsonNode eventBody, long currentQQ, long groupId) {
         super(groupId,currentQQ);
-        this.invitor = eventBody.get("Uid").asText();
-        this.invitee = eventBody.get("AdminUid").asText();
+        this.invitor = eventBody.get("AdminUid").asText();
+        this.invitee = eventBody.get("Uid").asText();
     }
 }

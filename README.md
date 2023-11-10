@@ -43,6 +43,10 @@ public class OpqEvent {
         if (event.getContent()!=null) {
             log.info("收到群《{}》->《{}》的消息:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getContent());
         }
+//        发送图片
+//        String string = OpqUtils.compress(new File("D:\\1.jpg"),0.8);
+//        FileBody body = OpqUtils.fileBody(null,string,null,OptionType.GROUP_IMAGE,e.getSelfId());
+//        e.sendGroupImage(body);
 //这是组合式消息，请根据需求进行判断
 //        if (event.getImages()!=null){
 //            log.info("收到群《{}》->《{}》的图片:", event.getGroup().getGroupName(), event.getGroup().getGroupCard());
@@ -111,5 +115,5 @@ public class OpqEvent {
     }
 }
 ```
-
+【OpqUtils是一个工具类，可根据需求使用】
 项目目前还在开发中（后续事件在逐渐完善，如出现问题，欢迎进行反馈，一个人的能力是有限的，需要大家一起努力维护）

@@ -2,17 +2,23 @@ package io.github.yangwanjun1.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.luciad.imageio.webp.WebPReadParam;
+import io.github.yangwanjun1.constants.OptionType;
+import io.github.yangwanjun1.core.OpqWebSocket;
 import io.github.yangwanjun1.data.*;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.springframework.util.Assert;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.util.Timeout;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class OpqUtils {
@@ -67,62 +73,90 @@ public class OpqUtils {
     }
 
     /**
-     * @param url    图片网络地址
-     * @param type   上传的资源类型
-     * @param toBase 是否转base64
+     *
+     * @param url 网络地址
+     * @param type 发送事件类型
+     * @param selfId 机器人id
+     * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能图片不可用）之后使用]
      */
-    public static String uploadImageFileBody(String url, int type, boolean toBase,double q) {
-        FileData fileData = new FileData();
-        fileData.setCgiRequest(new CgiRequest());
-        fileData.getCgiRequest().setCommandId(type);
-        if (toBase) {
-            fileData.getCgiRequest().setBase64Buf(compress(url,q));
-        } else {
-            fileData.getCgiRequest().setFileUrl(url);
-        }
-        return toJsonString(fileData);
+    public static FileBody fileBodyUrl(String url, OptionType type,long selfId) {
+        return fileBody(url,null,null,type,selfId);
     }
-
-    public static String uploadImageFileBody(File file, int type,double q) {
-        FileData fileData = new FileData();
-        fileData.setCgiRequest(new CgiRequest());
-        fileData.getCgiRequest().setCommandId(type);
-        fileData.getCgiRequest().setBase64Buf(compress(file,q));
-        return toJsonString(fileData);
+    /**
+     *
+     * @param base64 图片base64
+     * @param type 发送事件类型
+     * @param selfId 机器人id
+     * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能图片不可用）之后使用]
+     */
+    public static FileBody fileBodyBase64(String base64, OptionType type,long selfId) {
+        return fileBody(null,base64,null,type,selfId);
+    }
+    /**
+     *
+     * @param filePath 本地图片路径
+     * @param type 发送事件类型
+     * @param selfId 机器人id
+     * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能图片不可用）之后使用]
+     */
+    public static FileBody fileBodyFilePath(String filePath, OptionType type,long selfId) {
+        return fileBody(null,null,filePath,type,selfId);
     }
 
     /**
-     * 压缩图片
-     *
-     * @param url 网络地址
+     * 原始方法，不进行任何压缩
+     * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能可能图片不可用）之后使用]
+     * @param url 网络资源
+     * @param base64 base64
+     * @param filePath 本地路径
+     *  [三选一]
+     * @param type 发送到群或者私人
+     * @param selfId 机器人id
      */
-    public static String compress(String url,double q) {
-        try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
-            Request posted = Request.get(url);
+    public static FileBody fileBody(String url,String base64,String filePath, OptionType type,long selfId) {
+        FileData fileData = new FileData();
+        fileData.setCgiRequest(new CgiRequest());
+        fileData.getCgiRequest().setCommandId(type.getType());
+        fileData.getCgiRequest().setFileUrl(url);
+        fileData.getCgiRequest().setFilePath(filePath);
+        fileData.getCgiRequest().setBase64Buf(base64);
+        return uploadImageFile(toJsonString(fileData),selfId);
+    }
+
+    private static FileBody uploadImageFile(String body,long selfId) {
+        Request posted = Request.post("http://" + OpqWebSocket.getHost() + "/v1/upload?timeout=30&qq=" + selfId);
+        try {
+            posted.bodyString(body, ContentType.APPLICATION_JSON);
+            posted.connectTimeout(Timeout.ofMinutes(1));
+            posted.responseTimeout(Timeout.ofMinutes(1));
             Response response = posted.execute();
-            Assert.isTrue(response.returnResponse().getCode() != 200,response.returnContent().asString());
-            ByteArrayInputStream bois = new ByteArrayInputStream(response.returnContent().asBytes());
-            Thumbnails.of(bois).scale(1).outputQuality(q).toOutputStream(boas);
-            bois.close();
-            return Base64.getEncoder().encodeToString(boas.toByteArray());
+            String string = response.returnContent().asString(StandardCharsets.UTF_8);
+            ResultData data = OpqUtils.toBean(string, ResultData.class);
+            return fileBody(data.getResponseData().getFileId(),data.getResponseData().getFileMd5(),data.getResponseData().getFileSize());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-
-    public static String compress(File file,double q) {
-        try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
-            Thumbnails.of(file).scale(1).outputQuality(q).toOutputStream(boas);
-            return Base64.getEncoder().encodeToString(boas.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public static FileBody fileBody(Long fileId,String fileMd5,long fileSize){
+        FileBody body = new FileBody();
+        body.setFileId(fileId);
+        body.setFileMd5(fileMd5);
+        body.setFileSize(fileSize);
+        body.setWidth(3000);
+        body.setHeight(2000);
+        return body;
     }
 
+    /**
+     * 构建at体
+     */
     public static List<AtUinLists> atUinLists(long userId, String groupCard) {
         return atUinLists(Map.of(userId, groupCard));
     }
 
+    /**
+     * key：qq号 value：昵称（可忽略）
+     */
     public static List<AtUinLists> atUinLists(Map<Long, String> atUserMap) {
         return Optional.ofNullable(atUserMap)
                 .orElse(Collections.emptyMap())
@@ -191,11 +225,52 @@ public class OpqUtils {
         queryUinBody.setCgiRequest(request);
         return queryUinBody;
     }
+
     /**
-     * 时间戳转时间
+     * 压缩图片(q：压缩后的质量，>1原比例)
      */
-    public static Date date(long time){
-        return new Date(time * 1000);
+    public static String compress(File file, double q) throws IOException {
+        try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
+            Thumbnails.of(file).scale(q).toOutputStream(boas);
+            return Base64.getEncoder().encodeToString(boas.toByteArray());
+        } catch (IOException e) {
+            return compressWebp(file,q);
+        }
     }
 
+    /**
+     * 压缩图片(q：压缩后的质量，>1=原比例)
+     * @param file 下载到的图片
+     */
+    public static String compress(byte[] file, double q) throws IOException {
+        try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
+            ByteArrayInputStream bios = new ByteArrayInputStream(file);
+            Thumbnails.of(bios).scale(q).toOutputStream(boas);
+            bios.close();
+            return Base64.getEncoder().encodeToString(boas.toByteArray());
+        } catch (IOException e) {
+           throw new IOException(e.getMessage());
+        }
+    }
+
+
+    /**
+     * webp格式压缩
+     */
+    public static String compressWebp(File file, double q) throws IOException {
+        ImageReader next = ImageIO.getImageReadersByMIMEType("image/webp").next();
+        WebPReadParam wpp = new WebPReadParam();
+        wpp.setBypassFiltering(true);
+        FileImageInputStream input = new FileImageInputStream(file);
+        next.setInput(input);
+        BufferedImage image = next.read(0, wpp);
+        File output = new File(file.getAbsolutePath());
+        boolean jpg = ImageIO.write(image, "jpg", output);
+        if (jpg && file.delete()) {
+            ByteArrayOutputStream boas = new ByteArrayOutputStream();
+            Thumbnails.of(file).size(image.getWidth(), image.getHeight()).scale(q).toOutputStream(boas);
+            return Base64.getEncoder().encodeToString(boas.toByteArray());
+        }
+        throw new IOException("不支持的格式");
+    }
 }

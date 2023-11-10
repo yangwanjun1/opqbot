@@ -6,7 +6,6 @@ import io.github.yangwanjun1.data.ResultData;
 import io.github.yangwanjun1.event.OpqMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -35,68 +34,54 @@ public abstract class PrivateMsgEventSuper extends OpqMessageEvent {
     }
 
     /**
-     * 发送图片
+     * 发送（回复）图片【记得压缩图片，防止图片出现感叹号】
      */
     public ResultData sendImage(List<FileBody> imageList){
         return sendImage(imageList,getUserInfo().getUserId());
     }
 
     /**
-     * 发送图片给指定用户(q压缩质量，1不压缩)
+     * 发送图片给指定用户【记得压缩图片，防止图片出现感叹号】
      */
     public ResultData sendImage(List<FileBody> imageList,long userId){
         return sendImage(null,imageList,userId);
     }
 
     /**
-     * 发送网络图片(q压缩质量，1不压缩)
+     * 发送(回复)图片【记得压缩图片，防止图片出现感叹号】
      */
-    public ResultData sendImage(String url,double q){
-        return sendImage(url,getUserInfo().getUserId(),q);
-    }
-    public ResultData sendImage(String url,long userId,double q){
-        return sendImage(null,url,userId,q);
+    public ResultData sendImage(FileBody data){
+        return sendImage(data,getUserInfo().getUserId());
     }
 
     /**
-     * 发送图文给用户(q压缩质量，1不压缩)
+     * 发送图片给用户【记得压缩图片，防止图片出现感叹号】
      */
-    public ResultData sendImage(String content,String url,long userId,double q){
-        String body =  OpqUtils.uploadImageFileBody(url, getType(), true,q);
-        FileBody data = uploadImageFile(getSelfId(), body);
-        String result = msgBody(content,userId,List.of(data));
-        return sendMsg(getSelfId(), result, ResultData.class);
+    public ResultData sendImage(FileBody data,long userId){
+        return sendImage(null,data,userId);
     }
 
     /**
-     * 发送本地图片(q压缩质量，1不压缩)
+     * 发送(回复)图文【记得压缩图片，防止图片出现感叹号】
      */
-    public ResultData sendImage(File file,double q){
-        return sendImage(file,getUserInfo().getUserId(),q);
-    }
-    public ResultData sendImage(File file,long userId,double q){
-        return sendImage(null,file,userId,q);
+    public ResultData sendImage(String content,FileBody data){
+        return sendImage(content,data,getUserInfo().getUserId());
     }
 
-    /**
-     * 发送图文(q压缩质量，1不压缩)
-     */
-    public ResultData sendImage(String content,File file,double q){
-        return sendImage(content,file,getUserInfo().getUserId(),q);
-    }
-
-    public ResultData sendImage(String content,File file,long userId,double q){
-        String body = OpqUtils.uploadImageFileBody(file, getType(),q);
-        FileBody data = uploadImageFile(getSelfId(), body);
+    public ResultData sendImage(String content,FileBody data,long userId){
         String result = msgBody(content,userId, List.of(data));
         return sendMsg(getSelfId(),result, ResultData.class);
     }
     /**
-     * 发送图文列表给用户
+     * 发送(回复)图文列表给用户【记得压缩图片，防止图片出现感叹号】
      */
     public ResultData sendImage(String content,List<FileBody> imageList){
         return sendImage(content,imageList,getUserInfo().getUserId());
     }
+
+    /**
+     * (回复)图文【记得压缩图片，防止图片出现感叹号】
+     */
     public ResultData sendImage(String content,List<FileBody> imageList,long userId){
         String body = msgBody(content,userId,imageList);
         return sendMsg(getSelfId(),body, ResultData.class);

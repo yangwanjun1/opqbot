@@ -16,11 +16,12 @@ public class WsTask extends TimerTask {
 
     @Override
     public void run() {
-        if (socket.isOpen()){
+        if (socket.isOpen() && count !=1){
             count = 1;
+            log.info("opq连接成功");
             return;
         }
-        if (count == 1){
+        if (count == 1 && !socket.isOpen()){
             log.error("连接断开，正在尝试连接...");
         }
         if (count > 100){

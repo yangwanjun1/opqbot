@@ -5,7 +5,6 @@ import io.github.yangwanjun1.data.*;
 import io.github.yangwanjun1.event.OpqMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -51,51 +50,33 @@ public class GroupMessageEvent extends OpqMessageEvent {
     }
 
     /**
-     * 发送多张图片到群
+     * 发送多张图片到群【记得压缩图片，防止图片出现感叹号】
      */
     public ResultData sendGroupImage(List<FileBody> imageList){
         return sendGroupImage(imageList,null);
     }
 
     /**
-     * 发送网络图片到群(q压缩质量，1不压缩)
+     * 发送图片到群【记得压缩图片，防止图片出现感叹号】
      */
-    public ResultData sendGroupImage(String url,double q){
-        return sendGroupImage(null,url,q);
-    }
-
-    /**
-     * 发送图文到群(q压缩质量，1不压缩)
-     */
-    public ResultData sendGroupImage(String content,String url,double q){
-        String entity = OpqUtils.uploadImageFileBody(url, SourceType.GROUP.getType(), true,q);
-        FileBody data = uploadImageFile(getSelfId(), entity);
-        String body = msgBody(content,getGroup().getGroupCode(),List.of(data),null);
-        return sendMsg(getSelfId(), body, ResultData.class);
+    public ResultData sendGroupImage(FileBody data){
+        return sendGroupImage(null,data);
     }
     /**
-     * 发送本地图片到群(q压缩质量，1不压缩)
+     * 发送图文到群【记得压缩图片，防止图片出现感叹号】
      */
-    public ResultData sendGroupImage(File file,double q){
-        return sendGroupImage(null,file,q);
-    }
-    /**
-     * 发送图文到群(q压缩质量，1不压缩)
-     */
-    public ResultData sendGroupImage(String content,File file,double q){
-        String  entity = OpqUtils.uploadImageFileBody(file, SourceType.GROUP.getType(),q);
-        FileBody data = uploadImageFile(getSelfId(), entity);
+    public ResultData sendGroupImage(String content,FileBody data){
         String body = msgBody(content,getGroup().getGroupCode(), List.of(data),null);
         return sendMsg(getSelfId(),body, ResultData.class);
     }
     /**
-     * 发送多张图片到群并at用户
+     * 发送多张图片到群并at用户【记得压缩图片，防止图片出现感叹号】
      */
     public ResultData sendGroupImage(List<FileBody> imageList,List<AtUinLists> atUinLists){
         return sendGroupImage(null,imageList,atUinLists);
     }
     /**
-     * 发送多张图文到群并at用户
+     * 发送多张图文到群并at用户【记得压缩图片，防止图片出现感叹号】
      */
     public ResultData sendGroupImage(String content,List<FileBody> imageList,List<AtUinLists> atUinLists){
         String body = msgBody(content,getGroup().getGroupCode(),imageList,atUinLists);

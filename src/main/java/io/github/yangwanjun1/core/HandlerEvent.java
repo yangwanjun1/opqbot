@@ -1,5 +1,6 @@
 package io.github.yangwanjun1.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.yangwanjun1.annotation.OpqListener;
 import io.github.yangwanjun1.constants.Action;
@@ -38,19 +39,16 @@ public class HandlerEvent {
     @EventListener
     public void handler(OpqListenerEvent obj) {
         try {
-            String message = obj.getSource().toString();
-            JsonNode object = OpqUtils.getMapper().readTree(message);
+            JsonNode object = OpqUtils.getMapper().readTree(obj.getSource().toString());
             JsonNode jsonNodeEvent = object.get("CurrentPacket").get("EventData");
             JsonNode msgHead = jsonNodeEvent.get("MsgHead");
             if (isNull(msgHead)) {
-                //处理其他事件（登录，上下线 网络变化事 好友相关事件 为空）
                 handlerEvent(jsonNodeEvent,object.get("CurrentQQ").asLong());
                 return;
             }
-            JsonNode node = msgHead.get("MsgType");
             SourceType fromType = convertType(msgHead.get("FromType").asInt());
             JsonNode msgBody = jsonNodeEvent.get("MsgBody");
-            if (otherEvent(object,node, fromType) || isNull(msgBody)) {
+            if (otherEvent(object,msgHead.get("MsgType"), fromType) || isNull(msgBody)) {
                 return;
             }
             MessageData data = OpqUtils.toBean(object.toString(), MessageData.class);
@@ -66,8 +64,7 @@ public class HandlerEvent {
                 return;
             }
             execPoll(EventHandlerAdapter.getEvent(fromType), data, fromType);
-        }
-        catch (Exception e) {
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
     }
@@ -101,10 +98,10 @@ public class HandlerEvent {
         }
         long currentQQ = object.get("CurrentQQ").asLong();
         long groupId = eventData.get("MsgHead").get("FromUin").asLong();
-        if (msgType == SourceType.FROM_INVITE && fromType == SourceType.GROUP) {//邀请已经处理事件
+        if (msgType == SourceType.FROM_INVITE && fromType == SourceType.GROUP) {
             return execOther(SourceType.FROM_INVITE, new InviteHandlerEvent(eventBody,currentQQ,groupId));
         }
-        if (msgType == SourceType.FROM_REMOVE && fromType == SourceType.GROUP){//退群事件
+        if (msgType == SourceType.FROM_REMOVE && fromType == SourceType.GROUP){
             return execOther(SourceType.FROM_REMOVE, new ExitGroupEvent(eventBody.get("Uid").asText(),groupId,currentQQ));
         }
         return false;
@@ -112,33 +109,33 @@ public class HandlerEvent {
 
     public boolean execOther(SourceType type, OtherEvent otherEvent) {
         Map<Object, List<Method>> map = EventHandlerAdapter.getEvent(type);
-        getThreadPoll().execute(() ->map.forEach((key, value) -> invite(otherEvent, key, value)));
+        getThreadPoll().execute(() ->map.forEach((key, value) -> {
+            try {
+                invite(otherEvent, key, value);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }));
         return true;
     }
 
-    private void invite(OtherEvent event, Object obj, List<Method> methodList) {
-        methodList.forEach(m -> {
-            try {
-                m.invoke(obj, event);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
+    private void invite(OtherEvent event, Object obj, List<Method> methodList) throws InvocationTargetException, IllegalAccessException {
+        for (Method m : methodList) {
+            m.invoke(obj, event);
+        }
     }
     private void invokeNotice(OpqRequest event, Object obj, List<Method> methodList) {
-        methodList.forEach(m -> {
+        methodList.forEach(m->{
             try {
                 m.invoke(obj, event);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         });
-
     }
 
 
-    private void invokeObj(Object obj, List<Method> methodList, MessageData data, SourceType fromType) {
+    private void invokeObj(Object obj, List<Method> methodList, MessageData data, SourceType fromType){
         OpqMessageEvent event = switch (fromType) {
             case FRIEND -> new FriendMessageEvent( data.getCurrentPacket().getEventData(),data.getCurrentQQ());
             case GROUP -> new GroupMessageEvent(data.getCurrentPacket().getEventData(),data.getCurrentQQ());
@@ -178,7 +175,7 @@ public class HandlerEvent {
      * 处理at事件
      */
 
-    private void handlerAt(OpqMessageEvent event, Object obj, List<Method> methodList) {
+    private void handlerAt(OpqMessageEvent event, Object obj, List<Method> methodList){
         List<Method> list = filter(methodList, Action.AT, true);
         StringBuilder sb = new StringBuilder(event.getContent());
         for (AtUinLists uinList : Optional.ofNullable(event.getAtUinLists()).orElse(Collections.emptyList())) {
@@ -198,7 +195,9 @@ public class HandlerEvent {
             return;
         }
         List<Method> noMatcher = filter(methodList, Action.AT, false);
-        noMatcher.forEach(m -> execInvoke(m, event, obj, null));
+        for (Method m : noMatcher) {
+            execInvoke(m, event, obj, null);
+        }
     }
 
     /**
@@ -210,13 +209,15 @@ public class HandlerEvent {
             return;
         }
         List<Method> noMatcher = filter(methodList, Action.NONE, false);
-        noMatcher.forEach(m -> execInvoke(m, event, obj, null));
+        for (Method m : noMatcher) {
+            execInvoke(m, event, obj, null);
+        }
     }
 
     /**
      * 处理opq对象事件
      */
-    private boolean execResult(List<Method> list, OpqMessageEvent event, Object obj) {
+    private boolean execResult(List<Method> list, OpqMessageEvent event, Object obj){
         for (Method m : list) {
             if (execInvoke(m, event, obj, event.getContent())) {
                 return true;
@@ -229,9 +230,9 @@ public class HandlerEvent {
      * 执行事件
      */
     public boolean execInvoke(Method m, OpqMessageEvent event, Object obj, String content) {
+        OpqListener listener = m.getAnnotation(OpqListener.class);
+        String matcher = listener.matcher();
         try {
-            OpqListener listener = m.getAnnotation(OpqListener.class);
-            String matcher = listener.matcher();
             if (!matcher.isEmpty()) {
                 Matcher matchered = Pattern.compile(matcher).matcher(Optional.ofNullable(content).orElse("").strip());
                 if (matchered.find()) {//有正则，但不匹配
@@ -242,7 +243,8 @@ public class HandlerEvent {
             }
             m.invoke(obj, loadParams(m, event, null));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return true;
         }
         return false;
     }
@@ -269,7 +271,6 @@ public class HandlerEvent {
     /**
      * 获取事件类型
      */
-
     public SourceType convertType(int type) {
         return switch (type) {
             case 1 -> SourceType.FRIEND;
