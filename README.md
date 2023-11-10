@@ -44,9 +44,12 @@ public class OpqEvent {
             log.info("收到群《{}》->《{}》的消息:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getContent());
         }
 //        发送图片
-//        String string = OpqUtils.compress(new File("D:\\1.jpg"),0.8);
-//        FileBody body = OpqUtils.fileBody(null,string,null,OptionType.GROUP_IMAGE,e.getSelfId());
-//        e.sendGroupImage(body);
+//      File file = new File("C:\\Users\\future\\Desktop\\images\\yujie\\" + r.nextInt(1, 31) + ".jpg");
+//      FileInputStream stream = new FileInputStream(file);
+//      String string = OpqUtils.compress(stream.readAllBytes(),1);
+//      stream.close();
+//      FileBody body = OpqUtils.fileBodyBase64(string, OptionType.GROUP_IMAGE,e.getSelfId());
+//      e.sendGroupImage(body);
 //这是组合式消息，请根据需求进行判断
 //        if (event.getImages()!=null){
 //            log.info("收到群《{}》->《{}》的图片:", event.getGroup().getGroupName(), event.getGroup().getGroupCard());
