@@ -43,7 +43,7 @@ public class OpqEvent {
         if (event.getContent()!=null) {
             log.info("收到群《{}》->《{}》的消息:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getContent());
         }
-//        发送图片（电脑有时候看不到，但是手机没有问题）
+//        发送图片（【webp格式的，请转换一下，或者下个版本更新新】电脑有时候看不到，但是手机没有问题）
 //      File file = new File("C:\\Users\\future\\Desktop\\images\\yujie\\" + r.nextInt(1, 31) + ".jpg");
 //      FileInputStream stream = new FileInputStream(file);
 //      String string = OpqUtils.compress(stream.readAllBytes(),1);
