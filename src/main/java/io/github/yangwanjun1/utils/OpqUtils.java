@@ -3,15 +3,15 @@ package io.github.yangwanjun1.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luciad.imageio.webp.WebPReadParam;
+import io.github.yangwanjun1.core.WsSocketClient;
 import io.github.yangwanjun1.constants.OptionType;
-import io.github.yangwanjun1.core.OpqWebSocket;
+import io.github.yangwanjun1.core.WsServerSocket;
 import io.github.yangwanjun1.data.*;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
 import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.util.Timeout;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -79,8 +79,8 @@ public class OpqUtils {
      * @param selfId 机器人id
      * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能图片不可用）之后使用]
      */
-    public static FileBody fileBodyUrl(String url, OptionType type,long selfId) {
-        return fileBody(url,null,null,type,selfId);
+    public static FileBody fileBodyUrl(String url, OptionType type,long selfId,Long uin) {
+        return fileBody(url,null,null,type,selfId,uin);
     }
     /**
      *
@@ -89,8 +89,8 @@ public class OpqUtils {
      * @param selfId 机器人id
      * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能图片不可用）之后使用]
      */
-    public static FileBody fileBodyBase64(String base64, OptionType type,long selfId) {
-        return fileBody(null,base64,null,type,selfId);
+    public static FileBody fileBodyBase64(String base64, OptionType type,long selfId,Long uin) {
+        return fileBody(null,base64,null,type,selfId,uin);
     }
     /**
      *
@@ -99,8 +99,8 @@ public class OpqUtils {
      * @param selfId 机器人id
      * [不建议直接发送图片，可能会导致图片不可用，建议压缩（直接转base64可能图片不可用）之后使用]
      */
-    public static FileBody fileBodyFilePath(String filePath, OptionType type,long selfId) {
-        return fileBody(null,null,filePath,type,selfId);
+    public static FileBody fileBodyFilePath(String filePath, OptionType type,long selfId,Long uin) {
+        return fileBody(null,null,filePath,type,selfId,uin);
     }
 
     /**
@@ -113,22 +113,24 @@ public class OpqUtils {
      * @param type 发送到群或者私人
      * @param selfId 机器人id
      */
-    public static FileBody fileBody(String url,String base64,String filePath, OptionType type,long selfId) {
+    public static FileBody fileBody(String url,String base64,String filePath, OptionType type,long selfId,Long uin) {
         FileData fileData = new FileData();
         fileData.setCgiRequest(new CgiRequest());
         fileData.getCgiRequest().setCommandId(type.getType());
         fileData.getCgiRequest().setFileUrl(url);
+        fileData.getCgiRequest().setToUin(uin);
         fileData.getCgiRequest().setFilePath(filePath);
         fileData.getCgiRequest().setBase64Buf(base64);
         return uploadImageFile(toJsonString(fileData),selfId);
     }
 
     private static FileBody uploadImageFile(String body,long selfId) {
-        Request posted = Request.post("http://" + OpqWebSocket.getHost() + "/v1/upload?timeout=30&qq=" + selfId);
+        String hosts = WsSocketClient.getHost();
+        String format = hosts == null ? WsServerSocket.getHost(selfId) : hosts;
+        String uri = "http://" + format + "/v1/upload?timeout=30&qq=" + selfId;
+        Request posted = Request.post(uri);
         try {
             posted.bodyString(body, ContentType.APPLICATION_JSON);
-            posted.connectTimeout(Timeout.ofMinutes(1));
-            posted.responseTimeout(Timeout.ofMinutes(1));
             Response response = posted.execute();
             String string = response.returnContent().asString(StandardCharsets.UTF_8);
             ResultData data = OpqUtils.toBean(string, ResultData.class);
@@ -137,21 +139,22 @@ public class OpqUtils {
             throw new RuntimeException(e);
         }
     }
+
     public static FileBody fileBody(Long fileId,String fileMd5,long fileSize){
         FileBody body = new FileBody();
         body.setFileId(fileId);
         body.setFileMd5(fileMd5);
         body.setFileSize(fileSize);
-        body.setWidth(3000);
-        body.setHeight(2000);
+        body.setWidth(5000);
+        body.setHeight(5000);
         return body;
     }
 
     /**
      * 构建at体
      */
-    public static List<AtUinLists> atUinLists(long userId, String groupCard) {
-        return atUinLists(Map.of(userId, groupCard));
+    public static List<AtUinLists> atUinLists(Long userId, String groupCard) {
+        return userId == null ? null:atUinLists(Map.of(userId, groupCard));
     }
 
     /**
@@ -227,29 +230,55 @@ public class OpqUtils {
     }
 
     /**
-     * 压缩图片(q：压缩后的质量，>1原比例)
+     * 压缩图片(q：压缩后的质量，=1原比例)
      */
     public static String compress(File file, double q) throws IOException {
+        if (getImageFormat(new FileInputStream(file)).equals("Unknown")){
+            return compressWebp(file,q);
+        }
         try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
-            Thumbnails.of(file).scale(q).toOutputStream(boas);
+            Thumbnails.of(file).scale(q).outputQuality(1).toOutputStream(boas);
             return Base64.getEncoder().encodeToString(boas.toByteArray());
         } catch (IOException e) {
-            return compressWebp(file,q);
+            throw new IOException(e.getMessage());
+        }
+    }
+
+    /**
+     * 判断图片格式
+     */
+    public static String getImageFormat(FileInputStream inputStream) throws IOException {
+        byte[] buffer = new byte[8];
+        inputStream.read(buffer);
+        inputStream.close();
+        if (buffer[0] == (byte) 0xFF && buffer[1] == (byte) 0xD8) {
+            return "JPEG|JPG";
+        } else if (buffer[0] == (byte) 0x89 && buffer[1] == (byte) 0x50 && buffer[2] == (byte) 0x4E && buffer[3] == (byte) 0x47
+                && buffer[4] == (byte) 0x0D && buffer[5] == (byte) 0x0A && buffer[6] == (byte) 0x1A && buffer[7] == (byte) 0x0A) {
+            return "PNG";
+        } else if (buffer[0] == (byte) 0x47 && buffer[1] == (byte) 0x49 && buffer[2] == (byte) 0x46 && buffer[3] == (byte) 0x38) {
+            return "GIF";
+        } else if (buffer[0] == (byte) 0x42 && buffer[1] == (byte) 0x4D) {
+            return "BMP";
+        } else if (buffer[0] == (byte) 0x49 && buffer[1] == (byte) 0x49 && buffer[2] == (byte) 0x2A && buffer[3] == (byte) 0x00) {
+            return "TIFF";
+        } else {
+            return "Unknown";
         }
     }
 
     /**
      * 压缩图片(q：压缩后的质量，>1=原比例)
-     * @param file 下载到的图片
+     * @param file 下载到的图片(如果图片是webp格式，请先转换后压缩)
      */
     public static String compress(byte[] file, double q) throws IOException {
         try (ByteArrayOutputStream boas = new ByteArrayOutputStream()) {
             ByteArrayInputStream bios = new ByteArrayInputStream(file);
-            Thumbnails.of(bios).scale(q).toOutputStream(boas);
+            Thumbnails.of(bios).scale(q).outputQuality(1).toOutputStream(boas);
             bios.close();
             return Base64.getEncoder().encodeToString(boas.toByteArray());
         } catch (IOException e) {
-           throw new IOException(e.getMessage());
+            throw new IOException(e.getMessage());
         }
     }
 
@@ -264,12 +293,14 @@ public class OpqUtils {
         FileImageInputStream input = new FileImageInputStream(file);
         next.setInput(input);
         BufferedImage image = next.read(0, wpp);
-        File output = new File(file.getAbsolutePath());
-        boolean jpg = ImageIO.write(image, "jpg", output);
-        if (jpg && file.delete()) {
-            ByteArrayOutputStream boas = new ByteArrayOutputStream();
-            Thumbnails.of(file).size(image.getWidth(), image.getHeight()).scale(q).toOutputStream(boas);
-            return Base64.getEncoder().encodeToString(boas.toByteArray());
+        ByteArrayOutputStream boas = new ByteArrayOutputStream();
+        boolean jpg = ImageIO.write(image, "jpg",boas);
+        if (jpg) {
+            byte[] array = boas.toByteArray();
+            boas.reset();
+            Thumbnails.of(new ByteArrayInputStream(array))
+                    .scale(q).outputQuality(1).toOutputStream(boas);
+            return compress(boas.toByteArray(),q);
         }
         throw new IOException("不支持的格式");
     }

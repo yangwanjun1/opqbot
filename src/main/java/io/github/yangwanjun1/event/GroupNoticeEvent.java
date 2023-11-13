@@ -30,8 +30,8 @@ public class GroupNoticeEvent implements OpqRequest {
     private final Long groupCode; // 群号
     private final long selfId; // 群号
 
-    public GroupNoticeEvent(JsonNode jsonNodeEvent, JsonNode eventType,long selfId) {
-        this.eventType = eventType.asInt();
+    public GroupNoticeEvent(JsonNode jsonNodeEvent, int eventType,long selfId) {
+        this.eventType = eventType;
         this.groupName = jsonNodeEvent.get("GroupName").asText();
         this.actorUid = jsonNodeEvent.get("ActorUid").asText();
         this.actorUidNick = jsonNodeEvent.get("ActorUidNick").asText();
@@ -52,7 +52,7 @@ public class GroupNoticeEvent implements OpqRequest {
         body.setCgiRequest(new CgiRequest());
         body.getCgiRequest().setOpCode(opCode.getType());
         body.getCgiRequest().setMsgSeq(msgSeq);
-        body.getCgiRequest().setMsgType(1);
+        body.getCgiRequest().setMsgType(OptionType.GROUP_AGREE.getType());
         body.getCgiRequest().setGroupCode(groupCode);
         String string = OpqUtils.toJsonString(body);
         return sendMsg(selfId,string, ResultData.class);

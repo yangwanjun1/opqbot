@@ -11,6 +11,7 @@ import io.github.yangwanjun1.event.impl.FriendMessageEvent;
 import io.github.yangwanjun1.event.impl.GroupMessageEvent;
 import io.github.yangwanjun1.event.impl.RedBagMessageEvent;
 import io.github.yangwanjun1.event.impl.TemporarilyMessageEvent;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -25,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class EventHandlerAdapter implements ApplicationContextAware {
     private static Map<SourceType,Map<Object, List<Method>>> listenerEventMap;
+    @Getter
+    private static ApplicationContext context;
 
     public static boolean eventIsEmpty(){
         return listenerEventMap.isEmpty();
@@ -32,6 +35,7 @@ public class EventHandlerAdapter implements ApplicationContextAware {
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         listenerEventMap = new ConcurrentHashMap<>();
+        context = applicationContext;
         Map<Class<? extends OpqRequest>,SourceType> map = Map.of(
                 FriendMessageEvent.class,SourceType.FRIEND,
                 GroupMessageEvent.class,SourceType.GROUP,

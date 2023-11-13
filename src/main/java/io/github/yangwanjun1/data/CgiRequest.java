@@ -20,6 +20,8 @@ public class CgiRequest {
      */
     @JsonProperty("ToType")
     private Integer toType;
+    @JsonProperty("Notify")
+    private Boolean notify;
     /**
      * 必须转义
      */
@@ -35,6 +37,8 @@ public class CgiRequest {
     private Integer commandId;
     @JsonProperty("FilePath")
     private String  filePath;
+    @JsonProperty("FileName")
+    private String  fileName;
     @JsonProperty("FileUrl")
     private String  fileUrl;
     @JsonProperty("Base64Buf")

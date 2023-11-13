@@ -1,0 +1,12 @@
+opq:
+  ws: ws://127.0.0.1:9000/ws  #ws连接地址
+  thread-poll:
+    core: 2
+    max-size: 4
+    keep-alive-time: 30
+    block-size: 50
+  enabled-task: true
+  enabled-reverse-ws: false  #开启时上面的配置失效
+  reverse-ws: /ws
+  reverse-port: 9000  #opq的端口[用于发送消息]
+  welcome: 你好，欢迎使用opqbot

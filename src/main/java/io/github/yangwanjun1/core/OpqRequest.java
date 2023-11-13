@@ -10,10 +10,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public interface OpqRequest {
-    String host = "http://"+OpqWebSocket.getHost()+"/v1/LuaApiCaller?funcname=MagicCgiCmd&timeout=10&qq=";
+    String host = "http://%s/v1/LuaApiCaller?funcname=MagicCgiCmd&timeout=10&qq=%s";
 
     default <T>T sendMsg(long selfId, String body, Class<T> cls){
-        Request posted = Request.post(host + selfId);
+        String hosts = WsSocketClient.getHost();
+        String format = String.format(host, hosts == null ? WsServerSocket.getHost(selfId) : hosts, selfId);
+        Request posted = Request.post(format);
         try {
             posted.bodyString(body, ContentType.APPLICATION_JSON);
             Response response = posted.execute();

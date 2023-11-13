@@ -58,7 +58,7 @@ public class HandlerEvent {
             if (senderUin == currentQQ) {
                 return;
             }
-            if (eventData.getMsgBody().getRedBag() != null) {
+             if (eventData.getMsgBody().getRedBag() != null) {
                 RedBagMessageEvent event = new RedBagMessageEvent(eventData,currentQQ,senderUin);
                 getThreadPoll().execute(() -> EventHandlerAdapter.getEvent(SourceType.MONEY).forEach((key, value) -> handlerRedBag(event, key, value)));
                 return;
@@ -72,12 +72,16 @@ public class HandlerEvent {
     private void handlerEvent(JsonNode jsonNodeEvent, long currentQQ) {
         JsonNode status = jsonNodeEvent.get("Status");
         JsonNode msgType = jsonNodeEvent.get("MsgType");
-        if (!isNull(status) && status.asInt() == 1 && !isNull(msgType)){
-            GroupNoticeEvent event = new GroupNoticeEvent(jsonNodeEvent,msgType,currentQQ);
-            EventHandlerAdapter.getEvent(SourceType.NOTICE).forEach((k,v)-> invokeNotice(event,k,v));
-        } else if (isNull(msgType) && !isNull(status) && status.asInt() == 1) {
+        if (isNull(status) || status.asInt() !=1){
+            return;
+        }
+        if (isNull(msgType)) {
             FriendRequestEvent event = new FriendRequestEvent(jsonNodeEvent,currentQQ);
             EventHandlerAdapter.getEvent(SourceType.FRIEND_REQUEST).forEach((k,v)-> invokeNotice(event,k,v));
+        }
+        else if (isNull(jsonNodeEvent.get("Uin"))){//过滤登录和网络变化事件
+            GroupNoticeEvent event = new GroupNoticeEvent(jsonNodeEvent,msgType.asInt(),currentQQ);
+            EventHandlerAdapter.getEvent(SourceType.NOTICE).forEach((k,v)-> invokeNotice(event,k,v));
         }
     }
 
@@ -90,7 +94,7 @@ public class HandlerEvent {
     }
 
     private boolean otherEvent(JsonNode object,JsonNode node, SourceType fromType) {
-        SourceType msgType = convertType(node == null ? -1 : node.asInt());
+        SourceType msgType = convertType(isNull(node) ? -1 : node.asInt());
         JsonNode eventData = object.get("CurrentPacket").get("EventData");
         JsonNode eventBody = eventData.get("Event");
         if (msgType == SourceType.NONE || isNull(eventBody)) {

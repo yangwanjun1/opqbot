@@ -1,8 +1,23 @@
 # <center> ![](https://avatars.githubusercontent.com/u/91020200?v=4)<center/>
 ## <center>OPQBOT</center>
-本项目是基于OPQ进行封装的一个框架，通过简单的注解即可实现消息的收发
+本项目是基于OPQ进行封装的一个框架，使用spring boot项目即可轻松实现消息的收发和处理
+什么是OPQ[点击传送](https://github.com/opq-osc/OPQ)?
+如何使用？下载OPQ，获取token后启动OPQ
 
-如何使用？
+Windows
+```shell
+ OPQBot.exe  -port 9000 
+ -token xxxxx
+ -wsserver ws://127.0.0.1:9000/ws  #程序地址【不填写时默认正向，OPQ主动连接】
+ -wthread 100
+```
+Linux
+```shell
+./OPQBot -port 9000
+  -token xxxx
+  -wsserver ws://127.0.0.1:9000/ws #程序地址【不填写时默认正向，OPQ主动连接】
+  -wthread 100 #工作线程 (default 100)
+```
 新建springboot项目，导入opqbot依赖或者下载[opqbot.jar](https://github.com/yangwanjun1/opqbot/releases)，然后编写组件即可实现消息的收发，填写pom文件
 ```xml
   <dependencys>
@@ -10,7 +25,7 @@
     <dependency>
         <groupId>io.github.yangwanjun1</groupId>
         <artifactId>OPQBot</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.6</version>
     </dependency>
   </dependencys>
 
@@ -18,14 +33,17 @@
 配置yaml
 ```yaml
 opq:
-  ws: ws://127.0.0.1:9000/ws  #ws连接地址
-  thread-poll:                    #线程池配置，一下参数是默认
+  ws: ws://127.0.0.1:9000/ws  #ws连接地址【启动opq时没用填写ws时填写此处】
+  thread-poll:                #线程池配置，默认配置
     core: 2
     max-size: 4
     keep-alive-time: 30
     block-size: 50
   enabled-task: true        #是否开启ws自动重连
-  welcome: 欢迎使用OPQBOT     #启动打印
+  enabled-reverse-ws: false  #启用反向ws时上面的配置失效
+  reverse-ws: /ws      #path路径[opq启动时填写ws地址时填写path默认 /ws]
+  reverse-port: 9000  #opq的端口[用于发送消息]
+  welcome: 你好，欢迎使用opqbot
 ```
 
 通过下面的例子，实现消息的收发（一定要在spring扫描到的包下）
@@ -35,31 +53,17 @@ opq:
 @Component
 @Slf4j
 public class OpqEvent {
-
-
-//简单使用
+//    监听群事件
     @OpqListener(type = GroupMessageEvent.class)
     public void test(GroupMessageEvent event){
-        if (event.getContent()!=null) {
-            log.info("收到群《{}》->《{}》的消息:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getContent());
-        }
-//        发送图片
-//        String string = OpqUtils.compress(new File("D:\\1.jpg"),0.8);
-//        FileBody body = OpqUtils.fileBody(null,string,null,OptionType.GROUP_IMAGE,e.getSelfId());
-//        e.sendGroupImage(body);
-//这是组合式消息，请根据需求进行判断
-//        if (event.getImages()!=null){
-//            log.info("收到群《{}》->《{}》的图片:", event.getGroup().getGroupName(), event.getGroup().getGroupCard());
-//            event.getImages().forEach(i-> System.out.println(i.getUrl()));
-//        }
-//        if (event.getVideo()!=null){
-//            log.info("收到群《{}》->《{}》的视频:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getVideo().getUrl());
-//        }
+        log.info("收到群《{}》->《{}》的消息:{}", event.getGroup().getGroupName(), event.getGroup().getGroupCard(), event.getContent());
     }
     //配合正则使用
     @OpqListener(type = GroupMessageEvent.class,matcher = "^(你好)\\b")
     public void atMatcher(GroupMessageEvent event){
         log.info("收到消息:{}",event.getContent());
+//        发送消息
+        event.sendGroupMsg("你也好");
     }
     //红包事件
     @OpqListener(type = RedBagMessageEvent.class)
@@ -73,6 +77,11 @@ public class OpqEvent {
     @OpqListener(type = GroupMessageEvent.class,action = Action.AT)
     public void hallo(GroupMessageEvent event){
         log.info("收到at消息:{}",event.getContent());
+        //        发送图片
+        File file = new File("C:\\1.jpg");
+        String string = OpqUtils.compress(file,1);
+        FileBody body = OpqUtils.fileBodyBase64(string, OptionType.GROUP_IMAGE,e.getSelfId(),e.getGroup().getGroupCode());
+        e.sendGroupImage(body);
     }
     //进群事件
     @OpqListener(type = InviteHandlerEvent.class)
@@ -105,13 +114,14 @@ public class OpqEvent {
     @OpqListener(type = GroupNoticeEvent.class)
     public void notice(GroupNoticeEvent e){
         System.out.println("收到群通知事件:"+e.getGroupName());
+//        同意请求【当前仅监听未处理的状态事件】 事件类型 1 申请进群 2 被邀请进群 13退出群聊(针对管理员群主的推送事件) 15取消管理员 3设置管理员
+        e.handlerNotice(OptionType.GROUP_AGREE);
     }
     //好友请求
     @OpqListener(type = FriendRequestEvent.class)
     public void request(FriendRequestEvent e){
         UserData data = e.getRequester();
-        e.sendGroupMsg(String.format("收到 %s 的好友请求", data.getMark()+data.getNick()));
-        System.out.println(data);
+        System.out.println(String.format("收到 %s 的好友请求", data.getMark()+data.getNick()));
     }
 }
 ```
