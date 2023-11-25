@@ -10,9 +10,9 @@ public class C2CTempMessageHead {
     @JsonProperty("C2CType")
     private Integer c2CType;
     @JsonProperty("GroupUin")
-    private Integer groupUin;
+    private Long groupUin;
     @JsonProperty("GroupCode")
-    private Integer groupCode;
+    private Long groupCode;
     @JsonProperty("Sig")
     private String  sig;
 }

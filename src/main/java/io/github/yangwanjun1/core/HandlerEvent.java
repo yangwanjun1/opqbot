@@ -14,6 +14,7 @@ import io.github.yangwanjun1.event.impl.GroupMessageEvent;
 import io.github.yangwanjun1.event.impl.RedBagMessageEvent;
 import io.github.yangwanjun1.event.impl.TemporarilyMessageEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -30,12 +31,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.github.yangwanjun1.core.OpqThreadPoll.getThreadPoll;
-import static io.github.yangwanjun1.utils.OpqUtils.isAtALL;
 import static io.github.yangwanjun1.utils.OpqUtils.isAtMe;
 
 @Component
 @Slf4j
 public class HandlerEvent {
+    @Resource(name = "opqProperties")
+    private OpqProperties properties;
     @EventListener
     public void handler(OpqListenerEvent obj) {
         try {
@@ -55,11 +57,11 @@ public class HandlerEvent {
             EventData eventData = data.getCurrentPacket().getEventData();
             long senderUin = eventData.getMsgHead().getSenderUin();
             long currentQQ = data.getCurrentQQ();
-            if (senderUin == currentQQ) {
+            if (properties.getFilterBot() && senderUin == currentQQ){
                 return;
             }
-             if (eventData.getMsgBody().getRedBag() != null) {
-                RedBagMessageEvent event = new RedBagMessageEvent(eventData,currentQQ,senderUin);
+            if (eventData.getMsgBody().getRedBag() != null) {
+                RedBagMessageEvent event = new RedBagMessageEvent(eventData,currentQQ);
                 getThreadPoll().execute(() -> EventHandlerAdapter.getEvent(SourceType.MONEY).forEach((key, value) -> handlerRedBag(event, key, value)));
                 return;
             }
@@ -113,45 +115,45 @@ public class HandlerEvent {
 
     public boolean execOther(SourceType type, OtherEvent otherEvent) {
         Map<Object, List<Method>> map = EventHandlerAdapter.getEvent(type);
-        getThreadPoll().execute(() ->map.forEach((key, value) -> {
-            try {
-                invite(otherEvent, key, value);
-            } catch (InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }));
+        getThreadPoll().execute(() ->map.forEach((key, value) -> invite(otherEvent, key, value)));
         return true;
     }
 
-    private void invite(OtherEvent event, Object obj, List<Method> methodList) throws InvocationTargetException, IllegalAccessException {
+    private void invite(OtherEvent event, Object obj, List<Method> methodList) {
         for (Method m : methodList) {
-            m.invoke(obj, event);
-        }
-    }
-    private void invokeNotice(OpqRequest event, Object obj, List<Method> methodList) {
-        methodList.forEach(m->{
             try {
                 m.invoke(obj, event);
+                return;
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
-        });
+        }
+    }
+    private void invokeNotice(OpqRequest event, Object obj, List<Method> methodList) {
+        for (Method m : methodList) {
+            try {
+                m.invoke(obj, event);
+                return;
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
     private void invokeObj(Object obj, List<Method> methodList, MessageData data, SourceType fromType){
         OpqMessageEvent event = switch (fromType) {
-            case FRIEND -> new FriendMessageEvent( data.getCurrentPacket().getEventData(),data.getCurrentQQ());
-            case GROUP -> new GroupMessageEvent(data.getCurrentPacket().getEventData(),data.getCurrentQQ());
-            case TEMPORARILY -> new TemporarilyMessageEvent( data.getCurrentPacket().getEventData(),data.getCurrentQQ());
+            case FRIEND -> new FriendMessageEvent( data.getCurrentPacket().getEventData(),data.getCurrentQQ(),properties.getPhotoCatch());
+            case GROUP -> new GroupMessageEvent(data.getCurrentPacket().getEventData(),data.getCurrentQQ(),properties.getPhotoCatch());
+            case TEMPORARILY -> new TemporarilyMessageEvent( data.getCurrentPacket().getEventData(),data.getCurrentQQ(),properties.getPhotoCatch());
             default -> null;
         };
         Assert.notNull(event,"Unknown event");
-        if (isAtMe(event.getAtUinLists(), event.getSelfId()) && !isAtALL(event.getAtUinLists())) {
-            handlerAt(event, obj, methodList);
-        } else {
-            handlerNone(event, obj, methodList);
+        if (isAtMe(event.getAtUinLists(), event.getSelfId()) && handlerAt(event, obj, methodList)){
+            return;
         }
+        handlerNone(event, obj, methodList);
+
     }
 
     /**
@@ -168,19 +170,18 @@ public class HandlerEvent {
     /**
      * 过滤事件
      */
-    private List<Method> filter(List<Method> list, Action action, boolean matcher) {
-        return list.stream().filter(m -> {
-            OpqListener listener = m.getAnnotation(OpqListener.class);
-            return listener.action() == action && (matcher == (!listener.matcher().isEmpty()));
-        }).toList();
+    private List<Method> filter(List<Method> list, Action action) {
+        return list.stream().filter(m -> m.getAnnotation(OpqListener.class).action() == action).toList();
     }
 
     /**
      * 处理at事件
      */
-
-    private void handlerAt(OpqMessageEvent event, Object obj, List<Method> methodList){
-        List<Method> list = filter(methodList, Action.AT, true);
+    private boolean handlerAt(OpqMessageEvent event, Object obj, List<Method> methodList){
+        List<Method> list = filter(methodList, Action.AT);
+        if (list.isEmpty()){
+            return false;
+        }
         StringBuilder sb = new StringBuilder(event.getContent());
         for (AtUinLists uinList : Optional.ofNullable(event.getAtUinLists()).orElse(Collections.emptyList())) {
             if (uinList.getUin() == event.getSelfId()) {//消除机器人昵称
@@ -195,26 +196,33 @@ public class HandlerEvent {
                         event.getAtUinLists()).orElse(Collections.emptyList())
                 .stream().filter(a -> a.getUin() != event.getSelfId()).toList()
         );
-        if (!list.isEmpty() && execResult(list, event, obj)) {
-            return;
+        List<Method> atMatcher = list.stream().filter(m -> !m.getAnnotation(OpqListener.class).matcher().isEmpty()).toList();
+        if (!atMatcher.isEmpty() && execResult(atMatcher, event, obj)) {
+            return true;
         }
-        List<Method> noMatcher = filter(methodList, Action.AT, false);
+        List<Method> noMatcher = list.stream().filter(m -> m.getAnnotation(OpqListener.class).matcher().isEmpty()).toList();
         for (Method m : noMatcher) {
-            execInvoke(m, event, obj, null);
+            if (execInvoke(m, event, obj, null)) {
+                return true;
+            }
         }
+        return false;
     }
 
     /**
      * 执行没有条件的事件
      */
     private void handlerNone(OpqMessageEvent event, Object obj, List<Method> methodList) {
-        List<Method> list = filter(methodList, Action.NONE, true);
-        if (!list.isEmpty() && execResult(list, event, obj)) {
+        List<Method> list = filter(methodList, Action.NONE);
+        List<Method> matcherList = list.stream().filter(m -> !m.getAnnotation(OpqListener.class).matcher().isEmpty()).toList();
+        if (!list.isEmpty() && execResult(matcherList, event, obj)) {
             return;
         }
-        List<Method> noMatcher = filter(methodList, Action.NONE, false);
+        List<Method> noMatcher = list.stream().filter(m -> m.getAnnotation(OpqListener.class).matcher().isEmpty()).toList();
         for (Method m : noMatcher) {
-            execInvoke(m, event, obj, null);
+            if (execInvoke(m, event, obj, null)) {
+                return;
+            }
         }
     }
 
@@ -239,23 +247,21 @@ public class HandlerEvent {
         try {
             if (!matcher.isEmpty()) {
                 Matcher matchered = Pattern.compile(matcher).matcher(Optional.ofNullable(content).orElse("").strip());
-                if (matchered.find()) {//有正则，但不匹配
+                if (matchered.find()) {//有正则，匹配成功返回
                     m.invoke(obj, loadParams(m, event, matchered));
                     return true;
                 }
                 return false;
             }
             m.invoke(obj, loadParams(m, event, null));
+            return true;
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
-            return true;
+            return false;
         }
-        return false;
     }
 
-    /**
-     * 加载参数
-     */
+
     public Object[] loadParams(Method m, OpqMessageEvent event, Matcher matcher) {
         Parameter[] parameters = m.getParameters();
         Object[] objects = new Object[parameters.length];
@@ -272,9 +278,7 @@ public class HandlerEvent {
         return objects;
     }
 
-    /**
-     * 获取事件类型
-     */
+
     public SourceType convertType(int type) {
         return switch (type) {
             case 1 -> SourceType.FRIEND;

@@ -61,4 +61,8 @@ public class CgiRequest {
     private Integer msgType;
     @JsonProperty("GroupCode")
     private Long groupCode;
+    @JsonProperty("LastUin")
+    private Long lastUin;
+    @JsonProperty("LastBuffer")
+    private String lastBuffer;
 }

@@ -15,7 +15,7 @@ import java.util.Map;
 @Getter
 public class FriendRequestEvent extends OtherEvent {
     private final String msgAdditional;//备注 [问题1:你是谁？\n回答:四个零 或者是验证消息，可自己判断]
-    private final Long reqTime;//添加时间，改时间为秒
+    private final Long reqTime;//添加时间，单位：秒
     private final String reqUid;//请求人的uid
     private final String src;//来源
     private final String srcId;//来源id

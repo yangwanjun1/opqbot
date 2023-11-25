@@ -25,4 +25,6 @@ public class MsgBody {
     private FileBody video;
     @JsonProperty("Voice")
     private FileBody voice;
+    @JsonProperty("File")
+    private FileData file;
 }

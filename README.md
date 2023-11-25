@@ -8,14 +8,14 @@ Windows
 ```shell
  OPQBot.exe  -port 9000 
  -token xxxxx
- -wsserver ws://127.0.0.1:9000/ws  #程序地址【不填写时默认正向，OPQ主动连接】
+ -wsserver ws://127.0.0.1:9000/ws  #程序地址【不填写时默认正向，OPQ主动连接,docker容器不可用】
  -wthread 100
 ```
 Linux
 ```shell
 ./OPQBot -port 9000
   -token xxxx
-  -wsserver ws://127.0.0.1:9000/ws #程序地址【不填写时默认正向，OPQ主动连接】
+  -wsserver ws://127.0.0.1:9000/ws #程序地址【不填写时默认正向，OPQ主动连接,docker容器不可用】
   -wthread 100 #工作线程 (default 100)
 ```
 新建springboot项目，导入opqbot依赖或者下载[opqbot.jar](https://github.com/yangwanjun1/opqbot/releases)，然后编写组件即可实现消息的收发，填写pom文件
@@ -25,7 +25,7 @@ Linux
     <dependency>
         <groupId>io.github.yangwanjun1</groupId>
         <artifactId>OPQBot</artifactId>
-        <version>1.0.6</version>
+        <version>1.0.7</version>
     </dependency>
   </dependencys>
 
@@ -44,6 +44,8 @@ opq:
   reverse-ws: /ws      #path路径[opq启动时填写ws地址时填写path默认 /ws]
   reverse-port: 9000  #opq的端口[用于发送消息]
   welcome: 你好，欢迎使用opqbot
+  filter-bot: true   #是否过滤bot发送的信息默认true
+  photo-catch: true #开启图片缓存
 ```
 
 通过下面的例子，实现消息的收发（一定要在spring扫描到的包下）
@@ -77,11 +79,8 @@ public class OpqEvent {
     @OpqListener(type = GroupMessageEvent.class,action = Action.AT)
     public void hallo(GroupMessageEvent event){
         log.info("收到at消息:{}",event.getContent());
-        //        发送图片
-        File file = new File("C:\\1.jpg");
-        String string = OpqUtils.compress(file,1);
-        FileBody body = OpqUtils.fileBodyBase64(string, OptionType.GROUP_IMAGE,e.getSelfId(),e.getGroup().getGroupCode());
-        e.sendGroupImage(body);
+        //发送图片
+        e.sendGroupImage(new File("C:\\1.jpg"),0.8);
     }
     //进群事件
     @OpqListener(type = InviteHandlerEvent.class)
@@ -115,7 +114,9 @@ public class OpqEvent {
     public void notice(GroupNoticeEvent e){
         System.out.println("收到群通知事件:"+e.getGroupName());
 //        同意请求【当前仅监听未处理的状态事件】 事件类型 1 申请进群 2 被邀请进群 13退出群聊(针对管理员群主的推送事件) 15取消管理员 3设置管理员
-        e.handlerNotice(OptionType.GROUP_AGREE);
+        if (e.getEventType() == 1 || e.getEventType() == 2){ //同意进群
+            e.handlerNotice(OptionType.GROUP_AGREE);
+        }
     }
     //好友请求
     @OpqListener(type = FriendRequestEvent.class)
@@ -126,4 +127,4 @@ public class OpqEvent {
 }
 ```
 【OpqUtils是一个工具类，可根据需求使用】
-项目目前还在开发中（后续事件在逐渐完善，如出现问题，欢迎进行反馈，一个人的能力是有限的，需要大家一起努力维护）
+项目目前还在开发中（后续事件在逐渐完善，如出现问题，欢迎进行反馈）

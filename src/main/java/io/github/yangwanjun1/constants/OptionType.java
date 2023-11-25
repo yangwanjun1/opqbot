@@ -4,11 +4,11 @@ public enum OptionType {
     /**
      * 同意
      */
-    GROUP_AGREE(2),
+    GROUP_AGREE(1),
     /**
      * 拒绝
      */
-    GROUP_REFUSE(1),
+    GROUP_REFUSE(2),
     /**
      * 忽略
      */

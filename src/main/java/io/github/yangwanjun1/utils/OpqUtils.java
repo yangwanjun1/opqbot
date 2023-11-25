@@ -3,9 +3,11 @@ package io.github.yangwanjun1.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luciad.imageio.webp.WebPReadParam;
-import io.github.yangwanjun1.core.WsSocketClient;
+import io.github.yangwanjun1.constants.OptionCode;
 import io.github.yangwanjun1.constants.OptionType;
+import io.github.yangwanjun1.constants.SendType;
 import io.github.yangwanjun1.core.WsServerSocket;
+import io.github.yangwanjun1.core.WsSocketClient;
 import io.github.yangwanjun1.data.*;
 import lombok.Getter;
 import net.coobird.thumbnailator.Thumbnails;
@@ -27,6 +29,13 @@ public class OpqUtils {
     @Getter
     private final static ObjectMapper mapper = new ObjectMapper();
 
+    private static final Map<String,FileBody> imageCatch = new HashMap<>(8);
+    public static FileBody getCatchImage(String filename){
+        return imageCatch.get(filename);
+    }
+    public static void imageCatchPut(String filename,FileBody image){
+        imageCatch.put(filename,image);
+    }
     public static String toJsonString(Object obj){
         try {
             return mapper.writeValueAsString(obj);
@@ -45,14 +54,13 @@ public class OpqUtils {
         if (Objects.isNull(atUinLists)) {
             return false;
         }
-        return atUinLists.stream().anyMatch(a -> a.getUin() == selfId);
+        return atUinLists.stream().anyMatch(a -> a.getUin() == selfId && a.getUin() != 0);
     }
-
     public static boolean isAtALL(List<AtUinLists> atUinLists) {
         if (Objects.isNull(atUinLists) || atUinLists.size() != 1) {
             return false;
         }
-        return atUinLists.stream().anyMatch(a -> a.getNick().equals("全体成员"));
+        return atUinLists.stream().anyMatch(a -> a.getNick().equals("全体成员") && a.getUin() == 0);
     }
 
     /**
@@ -62,8 +70,7 @@ public class OpqUtils {
      * @param images      图片
      */
     public static String msgBody(Integer toType, String content, Long destination, List<FileBody> images, List<AtUinLists> at) {
-        SendDataBody body = new SendDataBody();
-        body.setCgiRequest(new CgiRequest());
+        SendMsgBody body = new SendMsgBody(SendType.SEND_MSG,new CgiRequest());
         body.getCgiRequest().setToType(toType);
         body.getCgiRequest().setContent(content);
         body.getCgiRequest().setToUin(destination);
@@ -71,7 +78,6 @@ public class OpqUtils {
         body.getCgiRequest().setAtUinLists(at);
         return toJsonString(body);
     }
-
     /**
      *
      * @param url 网络地址
@@ -114,8 +120,7 @@ public class OpqUtils {
      * @param selfId 机器人id
      */
     public static FileBody fileBody(String url,String base64,String filePath, OptionType type,long selfId,Long uin) {
-        FileData fileData = new FileData();
-        fileData.setCgiRequest(new CgiRequest());
+        SendMsgBody fileData = new SendMsgBody(SendType.DATA_UP_FILE,new CgiRequest());
         fileData.getCgiRequest().setCommandId(type.getType());
         fileData.getCgiRequest().setFileUrl(url);
         fileData.getCgiRequest().setToUin(uin);
@@ -145,8 +150,8 @@ public class OpqUtils {
         body.setFileId(fileId);
         body.setFileMd5(fileMd5);
         body.setFileSize(fileSize);
-        body.setWidth(5000);
-        body.setHeight(5000);
+        body.setWidth(3000);
+        body.setHeight(2500);
         return body;
     }
 
@@ -172,11 +177,8 @@ public class OpqUtils {
     /**
      * 撤回群消息
      */
-    public static FileData revocation(long msgSeq,long msgRandom,long groupId){
-        FileData data = new FileData();
-        data.setCgiCmd("SsoGroup.Op");
-        data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(4691);
+    public static SendMsgBody revocation(long msgSeq,long msgRandom,long groupId){
+        SendMsgBody data = new SendMsgBody(SendType.GROUP_REMOVE_MSG,new CgiRequest());
         data.getCgiRequest().setUin(groupId);
         data.getCgiRequest().setMsgSeq(msgSeq);
         data.getCgiRequest().setMsgRandom(msgRandom);
@@ -185,11 +187,9 @@ public class OpqUtils {
     /**
      * 禁言
      */
-    public static FileData ban(long groupId,String uid,Integer time){
-        FileData data = new FileData();
-        data.setCgiCmd("SsoGroup.Op");
-        data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(4691);
+    public static SendMsgBody ban(long groupId,String uid,Integer time){
+        SendMsgBody data = new SendMsgBody(SendType.SSO_GROUP_OP,new CgiRequest());
+        data.getCgiRequest().setOpCode(OptionCode.BEN_GROUPER.getCode());
         data.getCgiRequest().setUin(groupId);
         data.getCgiRequest().setUid(uid);
         data.getCgiRequest().setBanTime(time);
@@ -198,35 +198,26 @@ public class OpqUtils {
     /**
      * 踢成员
      */
-    public static FileData eliminate(long groupId,String uid){
-        FileData data = new FileData();
-        data.setCgiCmd("SsoGroup.Op");
-        data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(2208);
-        data.getCgiRequest().setUin(groupId);
-        data.getCgiRequest().setUid(uid);
-        return data;
+    public static SendMsgBody eliminate(long groupId,String uid){
+        SendMsgBody ban = ban(groupId, uid, null);
+        ban.getCgiRequest().setOpCode(OptionCode.REMOVE_GROUPER.getCode());
+        return ban;
     }
     /**
      * 退出群聊
      */
-    public static FileData leaveTheGroupBody(long groupId){
-        FileData data = new FileData();
-        data.setCgiCmd("SsoGroup.Op");
-        data.setCgiRequest(new CgiRequest());
-        data.getCgiRequest().setOpCode(4247);
-        data.getCgiRequest().setUin(groupId);
-        return data;
+    public static SendMsgBody leaveTheGroupBody(long groupId){
+        SendMsgBody ban = ban(groupId, null, null);
+        ban.getCgiRequest().setOpCode(OptionCode.EXIT_GROUP.getCode());
+        return ban;
     }
     /**
      * 获取uin
      */
-    public static QueryUinBody queryUin(String uid){
-        QueryUinBody queryUinBody = new QueryUinBody();
-        CgiRequest request = new CgiRequest();
-        request.setUid(uid);
-        queryUinBody.setCgiRequest(request);
-        return queryUinBody;
+    public static SendMsgBody queryUin(String uid){
+        SendMsgBody body = new SendMsgBody(SendType.QUERY_UIN,new CgiRequest());
+        body.getCgiRequest().setUid(uid);
+        return body;
     }
 
     /**
@@ -281,7 +272,6 @@ public class OpqUtils {
             throw new IOException(e.getMessage());
         }
     }
-
 
     /**
      * webp格式压缩

@@ -2,10 +2,11 @@ package io.github.yangwanjun1.event;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.yangwanjun1.constants.OptionType;
+import io.github.yangwanjun1.constants.SendType;
 import io.github.yangwanjun1.core.OpqRequest;
 import io.github.yangwanjun1.data.CgiRequest;
-import io.github.yangwanjun1.data.GroupRequestBody;
 import io.github.yangwanjun1.data.ResultData;
+import io.github.yangwanjun1.data.SendMsgBody;
 import io.github.yangwanjun1.utils.OpqUtils;
 import lombok.Getter;
 
@@ -48,13 +49,23 @@ public class GroupNoticeEvent implements OpqRequest {
      * 如果 eventType群可管理事件（即【bot为管理员可处理加群申请，否则仅可以处理被邀请事件】），
      */
     public ResultData handlerNotice(OptionType opCode){
-        GroupRequestBody body = new GroupRequestBody();
-        body.setCgiRequest(new CgiRequest());
+        SendMsgBody body = new SendMsgBody(SendType.SYSTEM_GROUP,new CgiRequest());
         body.getCgiRequest().setOpCode(opCode.getType());
         body.getCgiRequest().setMsgSeq(msgSeq);
         body.getCgiRequest().setMsgType(OptionType.GROUP_AGREE.getType());
         body.getCgiRequest().setGroupCode(groupCode);
         String string = OpqUtils.toJsonString(body);
         return sendMsg(selfId,string, ResultData.class);
+    }
+    public ResultData removeUser(String uid){
+        SendMsgBody body = new SendMsgBody(SendType.SSO_GROUP_OP,new CgiRequest());
+        body.getCgiRequest().setOpCode(2208);
+        body.getCgiRequest().setUin(groupCode);
+        body.getCgiRequest().setUid(uid);
+        String string = OpqUtils.toJsonString(body);
+        return sendMsg(selfId,string, ResultData.class);
+    }
+    public ResultData removeUser(){
+        return removeUser(getReqUid());
     }
 }

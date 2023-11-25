@@ -6,19 +6,15 @@ import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GroupInfo {
-    @JsonProperty("GroupCard")
-    private String groupCard;
+public class Group {
+    @JsonProperty("CreateTime")
+    private Long createTime;
+    @JsonProperty("GroupCnt")
+    private Long groupCnt;
     @JsonProperty("GroupCode")
     private Long groupCode;
-    @JsonProperty("GroupInfoSeq")
-    private int groupInfoSeq;
-    @JsonProperty("GroupLevel")
-    private int GroupLevel;
-    @JsonProperty("GroupRank")
-    private int groupRank;
-    @JsonProperty("GroupType")
-    private int groupType;
     @JsonProperty("GroupName")
     private String groupName;
+    @JsonProperty("MemberCnt")
+    private Long memberCnt;
 }

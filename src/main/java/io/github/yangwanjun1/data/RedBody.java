@@ -8,7 +8,12 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RedBody {
     @JsonProperty("CgiCmd")
-    private String CgiCmd = "OpenREDBAG";
+    private String cgiCmd;
     @JsonProperty("CgiRequest")
-    private RedBag CgiRequest;
+    private RedBag cgiRequest;
+
+    public RedBody(String type, RedBag redBag) {
+        this.cgiCmd = type;
+        this.cgiRequest = redBag;
+    }
 }

@@ -10,7 +10,7 @@
     </parent>
     <groupId>io.github.yangwanjun1</groupId>
     <artifactId>OPQBot</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     <name>OPQBot</name>
     <description>OPQBot</description>
     <properties>

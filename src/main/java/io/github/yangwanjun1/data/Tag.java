@@ -6,9 +6,9 @@ import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OnRedResult {
-    @JsonProperty("CgiBaseResponse")
-    private CgiBaseResponse cgiBaseResponse;
-    @JsonProperty("ResponseData")
-    private ResponseData responseData;
+public class Tag {
+    @JsonProperty("tagId")
+    private Integer TagId;
+    @JsonProperty("tagName")
+    private String TagName;
 }

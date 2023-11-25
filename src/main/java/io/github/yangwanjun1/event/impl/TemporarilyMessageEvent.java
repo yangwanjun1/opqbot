@@ -8,8 +8,8 @@ import io.github.yangwanjun1.data.EventData;
  */
 public class TemporarilyMessageEvent extends PrivateMsgEventSuper {
 
-    public TemporarilyMessageEvent(EventData eventData, long currentQQ) {
-        super(eventData,currentQQ);
+    public TemporarilyMessageEvent(EventData eventData, long currentQQ, Boolean photoCatch) {
+        super(eventData,currentQQ, photoCatch);
     }
 
     @Override

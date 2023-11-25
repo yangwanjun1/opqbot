@@ -3,9 +3,10 @@ package io.github.yangwanjun1.core;
 import io.github.yangwanjun1.event.Bot;
 import io.github.yangwanjun1.event.OpqListenerEvent;
 import io.github.yangwanjun1.utils.OpqUtils;
-import lombok.Getter;
+import jakarta.annotation.Resource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -18,9 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class WsServerSocket extends TextWebSocketHandler {
     private static final Map<Long,String> host = new ConcurrentHashMap<>();
-    private static final Map<WebSocketSession,Long> id = new ConcurrentHashMap<>();
-    @Getter
-    private static final Map<Long, Bot> botManager = new ConcurrentHashMap<>();
+
+    @Resource(name = "botManager")
+    private BotManager botManager;
     private static Integer port;
     public static void setPort(int reversePort){
         port = reversePort;
@@ -28,13 +29,12 @@ public class WsServerSocket extends TextWebSocketHandler {
     public static String getHost(Long qq){
         return host.get(qq);
     }
-    private static void addHost(@NonNull WebSocketSession session,Long qq){
+    private void addHost(@NonNull WebSocketSession session,Long qq){
         if (!host.containsKey(qq)) {
             String address = Objects.requireNonNull(session.getRemoteAddress()).getAddress().getHostAddress();
             String ip = address + ":" + port;
             host.put(qq, ip);
-            botManager.put(qq,new Bot(qq,ip));
-            id.put(session,qq);
+            botManager.add(qq,new Bot(qq,ip,session));
         }
     }
     /**
@@ -48,7 +48,10 @@ public class WsServerSocket extends TextWebSocketHandler {
         String payload = message.getPayload();
         long currentQQ = OpqUtils.getMapper().readTree(payload).get("CurrentQQ").asLong();
         addHost(session,currentQQ);
-        EventHandlerAdapter.getContext().publishEvent(new OpqListenerEvent(payload));
+        ApplicationContext context = EventHandlerAdapter.getContext();
+        if (context != null) {
+            context.publishEvent(new OpqListenerEvent(payload));
+        }
     }
     /**
      * 连接成功
@@ -76,9 +79,8 @@ public class WsServerSocket extends TextWebSocketHandler {
         removeId(session);
     }
 
-    private static void removeId(WebSocketSession session){
-        Long qq = id.get(session);
-        getBotManager().remove(qq);
+    private void removeId(WebSocketSession session){
+        long qq = botManager.removeSession(session);
         host.remove(qq);
     }
 }
