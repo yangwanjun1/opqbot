@@ -1,0 +1,13 @@
+bot:
+  ws: ws://127.0.0.1:9000/ws
+  self-id: 123456789
+  thread-poll-properties:
+    core: 2
+    max-size: 4
+    keep-alive-time: 30
+    block-size: 50
+  check-time: 5
+  enabled-reverse-ws: false
+  reverse-ws: /ws
+  reverse-port: 9000
+  filter-bot: true
