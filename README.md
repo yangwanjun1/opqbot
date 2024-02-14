@@ -32,7 +32,7 @@ CompressImage.class 图片压缩器，实现该接口时，上传的图片会进
 CacheImage.class 文件上传缓存器，实现该接口时，上传成功的文件会通过该类，在需要的时候注入此类即可获取缓存的图片
 
 
-简单使用
+简单使用（在启动类上加上：@ImportAutoConfiguration(classes = QQBotAutoConfig.class)）
 ```java
 @QQBot
 public class QQ {
