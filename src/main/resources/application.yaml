@@ -1,6 +1,6 @@
 bot:
   ws: ws://127.0.0.1:9000/ws
-  self-id: 123456789
+  self-id: 787788629
   thread-poll-properties:
     core: 2
     max-size: 4

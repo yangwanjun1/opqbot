@@ -12,6 +12,7 @@ public interface CacheImage {
      * (二选一，base64时，不走该方法)
      * @param path 本地图片的路径
      * @param url 网络图片地址
+     *  base上传时，倒数两个参数为空
      */
     void cache(Files image, String path, String url);
 

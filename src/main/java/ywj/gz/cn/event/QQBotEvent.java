@@ -14,10 +14,9 @@ import ywj.gz.cn.body.send.CgiRequest;
 import ywj.gz.cn.body.send.SendMsgBody;
 import ywj.gz.cn.constants.OptionType;
 import ywj.gz.cn.constants.SendType;
-import ywj.gz.cn.constants.SourceType;
+import ywj.gz.cn.core.BotManager;
 import ywj.gz.cn.core.CacheImage;
 import ywj.gz.cn.core.CompressImage;
-import ywj.gz.cn.core.Host;
 import ywj.gz.cn.util.MsgUtils;
 
 import java.io.File;
@@ -50,7 +49,7 @@ public abstract class QQBotEvent {
      * 构造请求并发送
      */
     private String request(String body) throws IOException, InterruptedException {
-        String host = "http://"+Host.getHost(selfId)+"/v1/LuaApiCaller?funcname=MagicCgiCmd&timeout=10&qq="+selfId;
+        String host = "http://"+BotManager.getHost(selfId)+"/v1/LuaApiCaller?funcname=MagicCgiCmd&timeout=10&qq="+selfId;
         HttpRequest request = MsgUtils.httpRequest(host, RequestMethod.POST,body);
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         return response.body();
@@ -88,6 +87,7 @@ public abstract class QQBotEvent {
 
     /**
      * 上传群组文件
+     * @param filePath 该路径应为linux格式的路径分隔符，否则可能导致失败
      */
     protected <T>T uploadFile(String filePath,long groupId,String fileName,Class<T> cls) throws IOException, InterruptedException {
         CgiRequest cgiRequest = new CgiRequest();
@@ -97,7 +97,7 @@ public abstract class QQBotEvent {
         cgiRequest.setNotify(true);
         cgiRequest.setToUin(groupId);
         SendMsgBody msgBody = new SendMsgBody(SendType.DATA_UP_FILE, cgiRequest);
-        String host = "http://"+Host.getHost(selfId)+"/v1/upload?qq="+selfId;
+        String host = "http://"+ BotManager.getHost(selfId)+"/v1/upload?qq="+selfId;
         HttpRequest request = MsgUtils.httpRequest(host, RequestMethod.POST,MsgUtils.toJsonString(msgBody));
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         return MsgUtils.toBean(response.body(),cls);
@@ -179,7 +179,7 @@ public abstract class QQBotEvent {
      */
     private Files uploadFile(CgiRequest request) throws IOException, InterruptedException {
         SendMsgBody body = new SendMsgBody(SendType.DATA_UP_FILE, request);
-        HttpRequest httpRequest = MsgUtils.httpRequest("http://"+ Host.getHost(selfId)+"/v1/upload?qq="+selfId,RequestMethod.POST,MsgUtils.toJsonString(body));
+        HttpRequest httpRequest = MsgUtils.httpRequest("http://"+ BotManager.getHost(selfId)+"/v1/upload?qq="+selfId,RequestMethod.POST,MsgUtils.toJsonString(body));
         HttpResponse<String> response = HttpClient.newHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofString());
         CommonlyResponseBody bodyData = MsgUtils.toBean(response.body(), CommonlyResponseBody.class);
         Files files = new Files();

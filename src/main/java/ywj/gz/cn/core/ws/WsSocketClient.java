@@ -4,7 +4,6 @@ import jakarta.websocket.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
-import ywj.gz.cn.core.Host;
 import ywj.gz.cn.core.handler.QQEventHandler;
 
 import java.io.IOException;
@@ -25,11 +24,10 @@ public class WsSocketClient {
     private volatile Timer timer ;
     private final Integer checkTime;
 
-    public WsSocketClient(URI serverUri, ApplicationContext context, QQEventHandler qqEventHandler, Integer checkTime, Long selfId){
+    public WsSocketClient(URI serverUri, ApplicationContext context, QQEventHandler qqEventHandler, Integer checkTime){
         this.uri = serverUri;
         this.context = context;
         this.qqEventHandler = qqEventHandler;
-        Host.addHost(selfId,uri.getHost()+":"+uri.getPort());
         this.checkTime = checkTime;
     }
     public void init() throws DeploymentException, IOException {

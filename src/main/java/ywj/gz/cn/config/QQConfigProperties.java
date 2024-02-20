@@ -17,6 +17,10 @@ public class QQConfigProperties {
      */
     private Long selfId = 0L;
     /**
+     * 是否是多实例的opq
+     */
+    private Boolean isInstance = false;
+    /**
      * 反向ws地址(默认：ws://127.0.0.1:程序端口/ws)
      */
     private String reverseWs = "/ws";

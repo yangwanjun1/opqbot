@@ -21,13 +21,15 @@ public class QQEventHandler {
     private final QQConfigProperties properties;
     private final CompressImage compress;
     private final CacheImage cacheImage;
+    private final BotManager botManager;
     private Map<String, MessageIntercept> beans;
     private final BotThreadPoll threadPoll;
-    public QQEventHandler(QQConfigProperties properties, CompressImage compress, CacheImage cacheImage, BotThreadPoll threadPoll) {
+    public QQEventHandler(QQConfigProperties properties, CompressImage compress, CacheImage cacheImage, BotThreadPoll threadPoll, BotManager botManager) {
         this.properties = properties;
         this.compress = compress;
         this.cacheImage = cacheImage;
         this.threadPoll = threadPoll;
+        this.botManager = botManager;
     }
 
     /**
@@ -36,7 +38,7 @@ public class QQEventHandler {
     public void handler(String message, ApplicationContext context, @NonNull WebSocketSession session) {
         try {
             MessageData data = mapper.readValue(message, MessageData.class);
-            Host.noContainsKey(data.getCurrentQQ(),session,properties);
+            botManager.noContainsKey(data.getCurrentQQ(),session,properties);
             handlerMessage(data,context);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

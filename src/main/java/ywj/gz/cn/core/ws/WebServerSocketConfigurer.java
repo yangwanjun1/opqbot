@@ -11,6 +11,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import ywj.gz.cn.config.QQConfigProperties;
+import ywj.gz.cn.core.BotManager;
 import ywj.gz.cn.core.BotThreadPoll;
 import ywj.gz.cn.core.CacheImage;
 import ywj.gz.cn.core.CompressImage;
@@ -25,6 +26,8 @@ public class WebServerSocketConfigurer implements WebSocketConfigurer {
 
     @Resource(name = "qqConfigProperties")
     private QQConfigProperties properties;
+    @Resource(name = "botManager")
+    private BotManager botManager;
     @Autowired
     private ApplicationContext context;
     @Resource(name = "botThreadPoll")
@@ -40,6 +43,6 @@ public class WebServerSocketConfigurer implements WebSocketConfigurer {
         Map<String, CacheImage> cacheImageMap = context.getBeansOfType(CacheImage.class);
         CompressImage compressImage = ofType.isEmpty() ? null : ofType.entrySet().iterator().next().getValue();
         CacheImage cacheImage = cacheImageMap.isEmpty() ? null : cacheImageMap.entrySet().iterator().next().getValue();
-        registry.addHandler(new WsServerSocket(properties,botThreadPoll,compressImage,cacheImage), ws).setAllowedOrigins("*");
+        registry.addHandler(new WsServerSocket(properties,botThreadPoll,compressImage,cacheImage,botManager), ws).setAllowedOrigins("*");
     }
 }

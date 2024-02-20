@@ -5,20 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ywj.gz.cn.body.pojo.AtUinLists;
-import ywj.gz.cn.body.pojo.Files;
-import ywj.gz.cn.body.receive.CommonlyResponseBody;
-import ywj.gz.cn.body.send.CgiRequest;
-import ywj.gz.cn.body.send.SendMsgBody;
-import ywj.gz.cn.constants.OptionType;
-import ywj.gz.cn.constants.SendType;
-import ywj.gz.cn.core.Host;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
 
@@ -65,7 +54,8 @@ public class MsgUtils {
     public static List<AtUinLists> atUinLists(Map<Long, String> atUserMap) {
         return Optional.ofNullable(atUserMap)
                 .orElse(Collections.emptyMap())
-                .entrySet().stream()
+                .entrySet()
+                .stream()
                 .map((e) -> new AtUinLists(e.getValue(), null, e.getKey()))
                 .toList();
     }
@@ -74,10 +64,10 @@ public class MsgUtils {
      * 是否at自己
      */
     public static boolean isAtMe(List<AtUinLists> atUinLists, long selfId) {
-        if (Objects.isNull(atUinLists)) {
-            return false;
-        }
-        return atUinLists.stream().anyMatch(a -> a.getUin() == selfId);
+        return !Objects.isNull(atUinLists) && atUinLists.stream().anyMatch(a -> a.getUin() == selfId);
     }
+    /**
+     * 构建合并转发
+     */
 
 }

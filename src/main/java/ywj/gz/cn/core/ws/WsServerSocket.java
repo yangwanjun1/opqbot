@@ -7,10 +7,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import ywj.gz.cn.config.QQConfigProperties;
-import ywj.gz.cn.core.BotThreadPoll;
-import ywj.gz.cn.core.CacheImage;
-import ywj.gz.cn.core.CompressImage;
-import ywj.gz.cn.core.EventHandlerAdapter;
+import ywj.gz.cn.core.*;
 import ywj.gz.cn.core.handler.QQEventHandler;
 
 import java.util.Objects;
@@ -18,8 +15,8 @@ import java.util.Objects;
 @Slf4j
 public class WsServerSocket extends TextWebSocketHandler {
     private final QQEventHandler eventHandler;
-    public WsServerSocket(QQConfigProperties properties, BotThreadPoll threadPoll, CompressImage compress, CacheImage cacheImage) {
-        this.eventHandler = new QQEventHandler(properties,compress,cacheImage,threadPoll);
+    public WsServerSocket(QQConfigProperties properties, BotThreadPoll threadPoll, CompressImage compress, CacheImage cacheImage, BotManager botManager) {
+        this.eventHandler = new QQEventHandler(properties,compress,cacheImage,threadPoll, botManager);
     }
 
     /**

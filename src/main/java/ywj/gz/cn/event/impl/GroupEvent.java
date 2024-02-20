@@ -196,6 +196,7 @@ public class GroupEvent extends QQBotEvent {
         }
         sendToImage(files);
     }
+
     private void sendToImage(Files image){
         SendMsgBody body = msgBody(SourceType.GROUP.getType(), null, group.getGroupCode(), List.of(image), null, null);
         send(body);
