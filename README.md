@@ -117,4 +117,5 @@ public class QQ {
 增加BotPluginList接口，当多q时，将bot的信息配置在此接口，此时会自动读取bot信息以及ip地址
 在需要的地方注入BotManager ，获取bot实例，实现主动发送消息 
 【在多q的情况，请使用正向ws，及本程序作为服务端】
+注：如果启动失败，请添加websocket依赖
 目前功能会随着opq的完善而完善，在使用前，该框架可能会存在不少的bug，如建议请勿使用
