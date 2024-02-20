@@ -1,5 +1,5 @@
 ## <center>OPQ_BOT</center>
-本项目是和OPQ对接的一个消息处理框架，基于SpringBoot3进行封装，开箱即用，对于用惯注解开发的友友们是更好的选择
+本项目是和OPQ对接的一个消息处理框架，类似go-cq，基于SpringBoot3进行封装，开箱即用，对于用惯注解开发的友友们是更好的选择
 什么是[OPQ](https://github.com/opq-osc/OPQ)?
 第一步：下载安装OPQ并启动
 第二步：添加本项目依赖坐标
